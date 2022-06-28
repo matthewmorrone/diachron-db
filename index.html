@@ -101,16 +101,12 @@ $(function () {
             $("#source_ipa_span").html(arrayToSelect(data, "source_ipa"))
             $("#target_ipa_span").html(arrayToSelect(data, "target_ipa"))
             addFunctionality()
-            $("[name=source_ipa]").val("j")
-            $("[name=target_ipa]").val("w")
         }, "text")
         $.post(url, { mode: "languages" }, function(data) {
             data = JSON.parse(data)
             $("#source_lang_span").html(arrayToSelect(data, "source_lang"))
             $("#target_lang_span").html(arrayToSelect(data, "target_lang"))
             addFunctionality()
-            $("[name=source_lang]").val("Old English")
-            $("[name=target_lang]").val("English")
 
         }, "text")
     }, "text")
