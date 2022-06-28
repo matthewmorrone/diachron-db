@@ -1,0 +1,107 @@
+@font-face {
+	font-family: "Raleway";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Raleway"), url(https://themes.googleusercontent.com/static/fonts/raleway/v6/cIFypx4yrWPDz3zOxk7hIQLUuEpTyoUstqEm5AMlJo4.woff) format("woff");
+}
+@font-face {
+	font-family: "Open Sans";
+	font-style: normal;
+	font-weight: 400;
+	src: local("Open Sans"), local("OpenSans"), url(https://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3bO3LdcAZYWl9Si6vvxL-qU.woff) format("woff");
+}
+* {
+	margin: 0px;
+	padding: 0px;
+}
+table {
+	width: 100%;
+}
+table, th, td {
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+body {
+	font-family: arial;
+	z-index: 0;
+}
+#content h1:hover {
+	text-decoration: underline;
+	font-style: italic;
+}
+header, nav, #content, aside, footer {
+	margin: 10px;
+	padding: 10px;
+}
+header a, header a:visited {
+	color: black;
+}
+a:hover, header a:hover {
+	color: #ff5335;
+}
+header, header h1, footer {
+	text-align: center;
+	font-weight: bold;
+	font-family: "Raleway";
+}
+header {
+	font-size: 200%;
+}
+footer {
+	clear: both;
+}
+nav, #content, aside {
+	font-family: "Open Sans";
+	line-height: 1.9;
+}
+nav {
+	float: left;
+}
+aside {
+	float: right;
+}
+#content {
+	float: left;
+	min-width: 74%;
+	max-width: 74%;
+}
+.modal {
+	position: absolute;
+	top: 0;
+	left: 0;
+	background-color: transparent;
+	z-index: 9997;
+	height: 100%;
+	width: 100%;
+}
+.overlay {
+	display: none;
+	position: absolute;
+	top: 10%;
+	left: 10%;
+	background-color: rgba(0, 0, 0, 0.5);
+	z-index: 9998;
+	height: 80%;
+	width: 80%;
+}
+.background {
+	background-color: rgba(255, 255, 255, 1);
+	z-index: 9999;
+	position: relative;
+	top: 5%;
+	left: 4%;
+	height: 90%;
+	width: 92%;
+	overflow: scroll;
+}
+.contact {
+	width: 400px;
+	margin: auto;
+}
+#icon {
+	vertical-align: middle;
+}
+aside {
+	width: auto;
+}
+
