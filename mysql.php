@@ -1,5 +1,5 @@
 <?
-error_reporting(0);
+error_reporting(E_ERROR);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
 if ($_POST) {
@@ -152,7 +152,7 @@ function get_language($mysqli, $language) {
 function add_language($mysqli, $name) {
     $query = "INSERT INTO languages (name) VALUES ('$name')";
     mysqli_query($mysqli, $query);
-    return get_language($mysqli, $result);
+    return get_language($mysqli, $name);
 }
 function get_transitions($mysqli) {
     $result = mysqli_query($mysqli, "SELECT id, source_language_id, target_language_id FROM transitions");
@@ -195,36 +195,36 @@ function get_transition($mysqli, $source, $target) {
 }
 function add_transition($mysqli, $source, $target) {
     $query = "INSERT INTO transitions (source_language_id, target_language_id) VALUES ('$source', '$target')";
-    mysqli_query($mysqli, $query);
-    return get_transition($mysqli, $result);
+    mysqli_query($mysqli, $query) or die(mysqli_error($mysqli));
+    return get_transition($mysqli, $source, $target);
 }
 function get_or_add_phone($mysqli, $phone) {
     if (count(check_phone($mysqli, $phone))) { 
-        echo "$phone found.\n"; 
+        // echo "$phone found.\n"; 
         return get_phone($mysqli, $phone);
     }
     else { 
-        echo "$phone not found.\n";
+        // echo "$phone not found.\n";
         return add_phone($mysqli, $phone);
     }
 }
 function get_or_add_language($mysqli, $language) {
     if (count(check_language($mysqli, $language))) { 
-        echo "$language found.\n"; 
+        // echo "$language found.\n"; 
         return get_language($mysqli, $language);
     }
     else { 
-        echo "$language not found.\n";
+        // echo "$language not found.\n";
         return add_language($mysqli, $language);
     }
 }
 function get_or_add_transition($mysqli, $source, $target) {
     if (count(check_transition($mysqli, $source, $target))) { 
-        echo "$source -> $target found.\n"; 
+        // echo "$source -> $target found.\n"; 
         return get_transition($mysqli, $source, $target);
     }
     else { 
-        echo "$source -> $target not found.\n";
+        // echo "$source -> $target not found.\n";
         return add_transition($mysqli, $source, $target);
     }
 }
@@ -239,8 +239,14 @@ function add_pair($mysqli, $data) {
     $source_lang_id = get_or_add_language($mysqli, $source_lang);
     $target_lang_id = get_or_add_language($mysqli, $target_lang);
 
+    echo "source_phone_id: $source_phone ($source_phone_id)\n";
+    echo "target_phone_id: $target_phone ($target_phone_id)\n";
+    echo "source_lang_id: $source_lang ($source_lang_id)\n";
+    echo "target_lang_id: $target_lang ($target_lang_id)\n";
 
     $transition_id = get_or_add_transition($mysqli, $source_lang_id, $target_lang_id);
+    echo "transition_id: $transition_id\n";
+
 
     $query = "select * from pairs
     where source_phone_id = '$source_phone_id'
@@ -255,7 +261,8 @@ function add_pair($mysqli, $data) {
     else {
         $query = "insert into pairs (source_phone_id, target_phone_id, transition_id)
         values ('$source_phone_id', '$target_phone_id', '$transition_id');";
-        get_query($mysqli, $query);
+        echo $query;
+        mysqli_query($mysqli, $query);
         echo 1;
     }
     //TODO: check if a pair exists with specific source, target and transition. if not, add it
