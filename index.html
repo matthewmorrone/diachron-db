@@ -134,16 +134,20 @@ async function loadTable() {
     let p4 = function() {
         $('input').on('change keyup', function() {
             $('table tbody tr').show();
-            let val = $(this).val();
-            if (!val) return;
-            // [0, 1, 2, 3].forEach((col) => {})
             $('table tbody tr').each(function() {
-                $(this).hide();
-                if ($(this).text().includes(val)) {
-                    $(this).show();
-                }
+                $(this).find("td").slice(0, 4).each(function() {
+                    let col = $(this).index();
+                    let val = $("input").eq(col).val();
+                    if (val === '') return;
+                    let text = $(this).text();
+                    if (val && text.includes(val)) {
+                        $(this).parent().show();
+                    }
+                    else {
+                        $(this).parent().hide();
+                    }
+                });
             });
-
         });
 
         $('.plus').click(() => {
