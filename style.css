@@ -22,6 +22,9 @@ table {
     float: left;
     width: auto !important;
 }
+.table > :not(:first-child), tbody {
+    border-top: 0px solid currentColor !important;
+}
 content div {
     display: flex;
     align-items: center;
@@ -31,7 +34,6 @@ th {
     text-align: center;
 }
 .ex, .plus {
-    /* box-sizing: content-box; */
     width: 1.5em;
     height: 1.5em;
     color: #000;
@@ -49,4 +51,9 @@ th {
 .inverted {
     filter: 100%;
     background-color: black;
+}
+tag::before {
+    content: '\A'; 
+    white-space: pre;
+
 }

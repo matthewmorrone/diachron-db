@@ -1,0 +1,45 @@
+ˈ,primary stress mark
+ˌ,secondary stress
+ː,length mark
+ˑ,half-length
+ʼ,ejective
+ʴ,rhotacized
+ʰ,aspirated
+ʱ,breathy-voice aspirated
+ʲ,palatalized
+ʷ,labialized
+ˠ,velarized
+ˤ,pharyngealized
+˞ ,rhotacized
+̃ ,nasalized
+̴ ,velarized or pharyngealized
+̆ ,extra-short
+̈ ,centralized
+̽ ,mid-centralized
+̚ ,not audibly released
+̋ ,extra high tone
+́ ,high tone
+̄ ,mid tone
+̀ ,low tone
+̏ ,extra low tone
+̌ ,rising tone
+̂ ,falling tone
+̊ ,voiceless
+̥ ,voiceless
+̤ ,breathy voiced
+̪ ,dental
+̬ ,voiced
+̰ ,creaky voiced
+̺ ,apical
+̼ ,linguolabial
+̻ ,laminal
+̹ ,more rounded
+̜ ,less rounded
+̟ ,advanced
+̠ ,retracted
+̝ ,raised
+̩ ,syllabic
+̞ ,lowered
+̯ ,non-syllabic
+̘ ,advanced tongue root
+̙ ,retracted tongue root

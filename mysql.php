@@ -36,7 +36,7 @@ if ($_GET) {
         break;
         case "tables":
             $query = "SHOW TABLES FROM $database";
-            printjson(get_tables());
+            echo json_encode(get_tables());
         break;
         case "test":
             $source_phone = "q";
@@ -71,27 +71,33 @@ if ($_GET) {
 
             echo "</pre>";
         break;
-        case "view_data":
-            json_encode(get_query("select * from phones"));
-            json_encode(get_query("select * from environments"));
-            json_encode(get_query("select * from languages"));
-        break;
-        case "pairs":
-            echo json_encode(get_pairs());
-        break;
-        case "phones":
-            echo json_encode(get_phones());
-        break;
-        case "languages":
-            echo json_encode(get_languages());
+        case "list":
+            switch($table) {
+                case "pairs":       echo json_encode(get_pairs());       break;
+                case "phones":      echo json_encode(get_phones());      break;
+                case "languages":   echo json_encode(get_languages());   break;
+                case "transitions": echo json_encode(get_transitions()); break;
+            }
         break;
         case "insert":
-            if (strcmp($table, "pair") === 0)     echo add_pair($data);
-            if (strcmp($table, "phone") === 0)    echo add_phone($phone);
-            if (strcmp($table, "language") === 0) echo add_language($language);
+            switch($table) {
+                case "pair":     echo add_pair($data);      break;
+                case "phone":    echo add_phone($value);    break;
+                case "language": echo add_language($value); break;
+            }
+        break;
+        case "update":
+            switch($table) {
+                case "phone":    echo update_phone($id, $value);    break;
+                case "language": echo update_language($id, $value); break;
+            }
         break;
         case "remove":
-            if (strcmp($table, "pair") === 0)     echo remove_pair($id);
+            switch($table) {
+                case "pair":     echo remove_pair($id);     break;
+                case "phone":    echo remove_phone($id);    break;
+                case "language": echo remove_language($id); break;
+            }
         break;
         default: break;
     }
@@ -118,7 +124,6 @@ function get_tables() {
     return $results;
 }
 function get_pairs() {
-    GLOBAL $mysqli;
     $query = "
     select id, source_lang, source_phone, target_lang, target_phone from
     (
@@ -190,18 +195,23 @@ function add_language($name) {
     return $mysqli->insert_id;
 }
 function get_transitions() {
-    GLOBAL $mysqli;
-    $query = "SELECT id, source_language_id, target_language_id FROM transitions";
-    foreach(get_query($query) as $row) {
-        $results[$row["id"]] = [
-            "source_language_id" => $row["source_language_id"],
-            "target_language_id" => $row["target_language_id"]
-        ];
-    }
-    return $results;
+    $query = "SELECT 
+        transitions.id as transition_id, 
+        source_language_id as source_lang_id,
+        target_language_id as target_lang_id,
+        source_lang.name as source_lang_name, 
+        target_lang.name as target_lang_name,
+        citation,
+        notes
+    FROM transitions
+    inner join languages as source_lang
+    inner join languages as target_lang
+    on  transitions.source_language_id = source_lang.id
+    and transitions.target_language_id = target_lang.id
+    ";
+    return get_query($query);
 }
 function check_transition($source, $target) {
-    GLOBAL $mysqli;
     $query = "SELECT * FROM transitions
     where source_language_id = '$source'
     and   target_language_id = '$target'
@@ -209,7 +219,6 @@ function check_transition($source, $target) {
     return !empty(get_query($query));
 }
 function get_transition($source, $target) {
-    GLOBAL $mysqli;
     $query = "SELECT * FROM transitions
     where source_language_id = '$source'
     and   target_language_id = '$target'
@@ -252,6 +261,26 @@ function get_or_add_transition($source, $target) {
 function remove_pair($id) {
     GLOBAL $mysqli;
     $query = "DELETE FROM pairs WHERE id='$id'";
+    $mysqli->query($query);
+}
+function update_phone($id, $value) {
+    GLOBAL $mysqli;
+    $query = "UPDATE phones SET ipa = '$value' WHERE id='$id'";
+    $mysqli->query($query);
+}
+function update_language($id, $value) {
+    GLOBAL $mysqli;
+    $query = "UPDATE languages SET name = '$value' WHERE id='$id'";
+    $mysqli->query($query);
+}
+function remove_phone($id) {
+    GLOBAL $mysqli;
+    $query = "DELETE FROM phones WHERE id='$id'";
+    $mysqli->query($query);
+}
+function remove_language($id) {
+    GLOBAL $mysqli;
+    $query = "DELETE FROM languages WHERE id='$id'";
     $mysqli->query($query);
 }
 function add_pair($data, $debug=false) {
