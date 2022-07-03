@@ -47,252 +47,252 @@ Object.defineProperty(Object.prototype, "define", {
         return this
     }
 })
-Object.prototype.define("hasProperty", function (a) {
-    return Object.hasOwnProperty(this, a)
-})
-Object.prototype.define("getPropertyName", function (a) {
-    return Object.getOwnPropertyName(this, a)
-})
-Object.prototype.define("getPropertyNames", function () {
-    return Object.getOwnPropertyNames(this)
-})
-Object.prototype.define("getPropertyDescriptor", function (a) {
-    return Object.getOwnPropertyDescriptor(this, a)
-})
-Object.prototype.define("getPropertyDescriptors", function () {
-    let result = {}
-    Object.getOwnPropertyNames(this).each(function (a, b) {
-        result[a] = Object.getOwnPropertyDescriptor(this, a)
-    }, this)
-    return result
-})
-Object.prototype.define("each", function (fn/*, ctx*/) {
-    for (let k in this) {
-        fn && this.hasProperty(k) && fn.call(this, this[k], k)
-    }
-    return this
-})
-Object.prototype.define("eachOwn", function (fn) {
-    let o = this
-    Object.keys(o).each(function (key) {
-        fn.call(o, o[key], key)
-    })
-})
-Object.prototype.define("forEach", function (callback, scope) {
-    let collection = this
-    if (Object.prototype.toString.call(collection) === '[object Object]') {
-        for (let prop in collection) {
-            if (Object.prototype.hasOwnProperty.call(collection, prop)) {
-                callback.call(scope, collection[prop], prop, collection)
-            }
-        }
-    } else {
-        for (let i = 0, len = collection.length; i < len; i++) {
-            callback.call(scope, collection[i], i, collection)
-        }
-    }
-})
-Object.prototype.define("map", function (fn, ctx) {
-    ctx = ctx || this;
-    let self = this,
-        result = {}
-    Object.keys(self).each(function (v, k) {
-        result[k] = fn.call(ctx, self[k], k, self)
-    })
-    return result
-})
-Object.define("setPrototypeOf", function (obj, proto) {
-    obj.__proto__ = proto
-    return obj
-})
-Object.prototype.define("log", function () {
-    return log(this)
-})
-Object.prototype.define("size", function () {
-    return this.length || Object.keys(this).length
-})
-Object.prototype.define("str", function () {
-    return JSON.stringify(this)
-})
-Object.prototype.define("toInt", function () {
-    return parseInt(this, (arguments[0] || 10))
-})
-Object.prototype.define("clone", function () {
-    return JSON.parse(JSON.stringify(this))
-})
-Object.prototype.define("values", function () {
-    let keys = Object.keys(this)
-    let ret = []
-    for (let i = 0; i < keys.length; i++) {
-        ret.push(this[keys[i]])
-    }
-    return ret
-})
-Object.prototype.define("setPrototypeOf", function (obj, proto) {
-    obj.__proto__ = proto
-    return obj
-})
-Object.prototype.define("string", function (o) {
-    return Object.prototype.toString.call(o)
-})
-Object.prototype.define("has", function (key) {
-    return Object.prototype.hasOwnProperty.call(this, key)
-})
-Object.prototype.define("inherits", function (Parent) {
-    let Child = this
-    let hasProp = {}.hasOwnProperty
-    function T() {
-        this.constructor = Child
-        this.constructor$ = Parent
-        for (let propertyName in Parent.prototype) {
-            if (hasProp.call(Parent.prototype, propertyName) && propertyName.charAt(propertyName.length - 1) !== "$") {
-                this[propertyName + "$"] = Parent.prototype[propertyName]
-            }
-        }
-    }
-    T.prototype = Parent.prototype
-    Child.prototype = new T()
-    return Child.prototype
-})
-Object.prototype.define("extend", function (src) {
-    for (let i in src) {
-        if (Object.prototype.hasOwnProperty(src, i)) {
-            this[i] = src[i]
-        }
-    }
-})
-Object.prototype.define("class", function () {
-    return Object.prototype.toString.call(this);
-})
-Object.prototype.define("getPropertyNames", function () {
-    return Object.getOwnPropertyNames(this)
-})
-Object.prototype.define("copy", function () {
-    let obj = this
-    const copy = Object.create(Object.getPrototypeOf(obj))
-    const propNames = Object.getOwnPropertyNames(obj)
+// Object.prototype.define("hasProperty", function (a) {
+//     return Object.hasOwnProperty(this, a)
+// })
+// Object.prototype.define("getPropertyName", function (a) {
+//     return Object.getOwnPropertyName(this, a)
+// })
+// Object.prototype.define("getPropertyNames", function () {
+//     return Object.getOwnPropertyNames(this)
+// })
+// Object.prototype.define("getPropertyDescriptor", function (a) {
+//     return Object.getOwnPropertyDescriptor(this, a)
+// })
+// Object.prototype.define("getPropertyDescriptors", function () {
+//     let result = {}
+//     Object.getOwnPropertyNames(this).each(function (a, b) {
+//         result[a] = Object.getOwnPropertyDescriptor(this, a)
+//     }, this)
+//     return result
+// })
+// Object.prototype.define("each", function (fn/*, ctx*/) {
+//     for (let k in this) {
+//         fn && this.hasProperty(k) && fn.call(this, this[k], k)
+//     }
+//     return this
+// })
+// Object.prototype.define("eachOwn", function (fn) {
+//     let o = this
+//     Object.keys(o).each(function (key) {
+//         fn.call(o, o[key], key)
+//     })
+// })
+// Object.prototype.define("forEach", function (callback, scope) {
+//     let collection = this
+//     if (Object.prototype.toString.call(collection) === '[object Object]') {
+//         for (let prop in collection) {
+//             if (Object.prototype.hasOwnProperty.call(collection, prop)) {
+//                 callback.call(scope, collection[prop], prop, collection)
+//             }
+//         }
+//     } else {
+//         for (let i = 0, len = collection.length; i < len; i++) {
+//             callback.call(scope, collection[i], i, collection)
+//         }
+//     }
+// })
+// Object.prototype.define("map", function (fn, ctx) {
+//     ctx = ctx || this;
+//     let self = this,
+//         result = {}
+//     Object.keys(self).each(function (v, k) {
+//         result[k] = fn.call(ctx, self[k], k, self)
+//     })
+//     return result
+// })
+// Object.define("setPrototypeOf", function (obj, proto) {
+//     obj.__proto__ = proto
+//     return obj
+// })
+// Object.prototype.define("log", function () {
+//     return log(this)
+// })
+// Object.prototype.define("size", function () {
+//     return this.length || Object.keys(this).length
+// })
+// Object.prototype.define("str", function () {
+//     return JSON.stringify(this)
+// })
+// Object.prototype.define("toInt", function () {
+//     return parseInt(this, (arguments[0] || 10))
+// })
+// Object.prototype.define("clone", function () {
+//     return JSON.parse(JSON.stringify(this))
+// })
+// Object.prototype.define("values", function () {
+//     let keys = Object.keys(this)
+//     let ret = []
+//     for (let i = 0; i < keys.length; i++) {
+//         ret.push(this[keys[i]])
+//     }
+//     return ret
+// })
+// Object.prototype.define("setPrototypeOf", function (obj, proto) {
+//     obj.__proto__ = proto
+//     return obj
+// })
+// Object.prototype.define("string", function (o) {
+//     return Object.prototype.toString.call(o)
+// })
+// Object.prototype.define("has", function (key) {
+//     return Object.prototype.hasOwnProperty.call(this, key)
+// })
+// Object.prototype.define("inherits", function (Parent) {
+//     let Child = this
+//     let hasProp = {}.hasOwnProperty
+//     function T() {
+//         this.constructor = Child
+//         this.constructor$ = Parent
+//         for (let propertyName in Parent.prototype) {
+//             if (hasProp.call(Parent.prototype, propertyName) && propertyName.charAt(propertyName.length - 1) !== "$") {
+//                 this[propertyName + "$"] = Parent.prototype[propertyName]
+//             }
+//         }
+//     }
+//     T.prototype = Parent.prototype
+//     Child.prototype = new T()
+//     return Child.prototype
+// })
+// Object.prototype.define("extend", function (src) {
+//     for (let i in src) {
+//         if (Object.prototype.hasOwnProperty(src, i)) {
+//             this[i] = src[i]
+//         }
+//     }
+// })
+// Object.prototype.define("class", function () {
+//     return Object.prototype.toString.call(this);
+// })
+// Object.prototype.define("getPropertyNames", function () {
+//     return Object.getOwnPropertyNames(this)
+// })
+// Object.prototype.define("copy", function () {
+//     let obj = this
+//     const copy = Object.create(Object.getPrototypeOf(obj))
+//     const propNames = Object.getOwnPropertyNames(obj)
 
-    propNames.forEach(function (name) {
-        const desc = Object.getOwnPropertyDescriptor(obj, name)
-        Object.defineProperty(copy, name, desc)
-    })
-    return copy
-})
-Object.prototype.define("fastProps", function () {
-    function FakeConstructor() { }
-    FakeConstructor.prototype = this
-    let l = 8
-    while (l--) {
-        new FakeConstructor()
-    }
-    return this
-    eval(this)
-})
-Object.prototype.define("merge", function (source, options) {
-    let target = this
-    if (!source) {
-        return target
-    }
-    if (typeof source !== 'object') {
-        if (Array.isArray(target)) {
-            target.push(source)
-        }
-        else if (typeof target === 'object') {
-            if (options.plainObjects || options.allowPrototypes || !has.call(Object.prototype, source)) {
-                target[source] = true
-            }
-        }
-        else {
-            return [target, source]
-        }
-        return target
-    }
-    if (typeof target !== 'object') {
-        return [target].concat(source)
-    }
-    let mergeTarget = target
-    if (Array.isArray(target) && !Array.isArray(source)) {
-        mergeTarget = exports.arrayToObject(target, options)
-    }
-    if (Array.isArray(target) && Array.isArray(source)) {
-        source.forEach(function (item, i) {
-            if (has.call(target, i)) {
-                if (target[i] && typeof target[i] === 'object') {
-                    target[i] = exports.merge(target[i], item, options)
-                }
-                else {
-                    target.push(item)
-                }
-            }
-            else {
-                target[i] = item
-            }
-        })
-        return target
-    }
-    return Object.keys(source).reduce(function (acc, key) {
-        let value = source[key]
-        if (has.call(acc, key)) {
-            acc[key] = exports.merge(acc[key], value, options)
-        }
-        else {
-            acc[key] = value
-        }
-        return acc
-    }, mergeTarget)
-})
-// Object.prototype.define("assign", function (...sources) {
+//     propNames.forEach(function (name) {
+//         const desc = Object.getOwnPropertyDescriptor(obj, name)
+//         Object.defineProperty(copy, name, desc)
+//     })
+//     return copy
+// })
+// Object.prototype.define("fastProps", function () {
+//     function FakeConstructor() { }
+//     FakeConstructor.prototype = this
+//     let l = 8
+//     while (l--) {
+//         new FakeConstructor()
+//     }
+//     return this
+//     eval(this)
+// })
+// Object.prototype.define("merge", function (source, options) {
 //     let target = this
-//     sources.forEach(source => {
-//         let descriptors = Object.keys(source).reduce((descriptors, key) => {
-//             descriptors[key] = Object.getOwnPropertyDescriptor(source, key)
-//             return descriptors;
-//         }, {})
-//         Object.getOwnPropertySymbols(source).forEach(sym => {
-//             let descriptor = Object.getOwnPropertyDescriptor(source, sym)
-//             if (descriptor.enumerable) {
-//                 descriptors[sym] = descriptor
+//     if (!source) {
+//         return target
+//     }
+//     if (typeof source !== 'object') {
+//         if (Array.isArray(target)) {
+//             target.push(source)
+//         }
+//         else if (typeof target === 'object') {
+//             if (options.plainObjects || options.allowPrototypes || !has.call(Object.prototype, source)) {
+//                 target[source] = true
+//             }
+//         }
+//         else {
+//             return [target, source]
+//         }
+//         return target
+//     }
+//     if (typeof target !== 'object') {
+//         return [target].concat(source)
+//     }
+//     let mergeTarget = target
+//     if (Array.isArray(target) && !Array.isArray(source)) {
+//         mergeTarget = exports.arrayToObject(target, options)
+//     }
+//     if (Array.isArray(target) && Array.isArray(source)) {
+//         source.forEach(function (item, i) {
+//             if (has.call(target, i)) {
+//                 if (target[i] && typeof target[i] === 'object') {
+//                     target[i] = exports.merge(target[i], item, options)
+//                 }
+//                 else {
+//                     target.push(item)
+//                 }
+//             }
+//             else {
+//                 target[i] = item
 //             }
 //         })
-//         Object.defineProperties(target, descriptors)
-//     })
-//     return target;
+//         return target
+//     }
+//     return Object.keys(source).reduce(function (acc, key) {
+//         let value = source[key]
+//         if (has.call(acc, key)) {
+//             acc[key] = exports.merge(acc[key], value, options)
+//         }
+//         else {
+//             acc[key] = value
+//         }
+//         return acc
+//     }, mergeTarget)
 // })
-Object.prototype.define("dump", function (indent) {
-    let obj = this;
-    let result = "";
-    if (indent == null) indent = "";
-    for (let property in obj) {
-        let value = obj[property];
-        if (typeof value == 'string') value = "'" + value + "'";
-        else if (typeof value == 'object') {
-            if (value instanceof Array) {
-                value = "[" + value + "]";
-            }
-            else {
-                let od = Object.prototype.dump(value, indent + "  ");
-                value = "\n" + indent + "{\n" + od + "\n" + indent + "}";
-            }
-        }
-        result += indent + "'" + property + "' : " + value + ",\n";
-    }
-    return result.replace(/,\n$/, "");
-})
-Object.prototype.define("print", function () {
-    console.log(util.inspect(this, false, null, true /* enable colors */))
-})
-Object.prototype.define("filter", function(obj, predicate) {
-    let result = {}, key;
-    for (key in obj) {
-        if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
-            result[key] = obj[key];
-        }
-    }
-    return result;
-})
-Object.prototype.define("log", function () {
-    console.log(this)
-})
+// // Object.prototype.define("assign", function (...sources) {
+// //     let target = this
+// //     sources.forEach(source => {
+// //         let descriptors = Object.keys(source).reduce((descriptors, key) => {
+// //             descriptors[key] = Object.getOwnPropertyDescriptor(source, key)
+// //             return descriptors;
+// //         }, {})
+// //         Object.getOwnPropertySymbols(source).forEach(sym => {
+// //             let descriptor = Object.getOwnPropertyDescriptor(source, sym)
+// //             if (descriptor.enumerable) {
+// //                 descriptors[sym] = descriptor
+// //             }
+// //         })
+// //         Object.defineProperties(target, descriptors)
+// //     })
+// //     return target;
+// // })
+// Object.prototype.define("dump", function (indent) {
+//     let obj = this;
+//     let result = "";
+//     if (indent == null) indent = "";
+//     for (let property in obj) {
+//         let value = obj[property];
+//         if (typeof value == 'string') value = "'" + value + "'";
+//         else if (typeof value == 'object') {
+//             if (value instanceof Array) {
+//                 value = "[" + value + "]";
+//             }
+//             else {
+//                 let od = Object.prototype.dump(value, indent + "  ");
+//                 value = "\n" + indent + "{\n" + od + "\n" + indent + "}";
+//             }
+//         }
+//         result += indent + "'" + property + "' : " + value + ",\n";
+//     }
+//     return result.replace(/,\n$/, "");
+// })
+// Object.prototype.define("print", function () {
+//     console.log(util.inspect(this, false, null, true /* enable colors */))
+// })
+// Object.prototype.define("filter", function(obj, predicate) {
+//     let result = {}, key;
+//     for (key in obj) {
+//         if (obj.hasOwnProperty(key) && !predicate(obj[key])) {
+//             result[key] = obj[key];
+//         }
+//     }
+//     return result;
+// })
+// Object.prototype.define("log", function () {
+//     console.log(this)
+// })
 
 Array.prototype.define("toObject", function (options) {
     let source = this

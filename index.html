@@ -23,7 +23,6 @@
 <script src='https://matthewmorrone.com/jquery.js'></script>
 <script src='https://matthewmorrone.com/jquery.ui.js'></script>
 <script src='https://matthewmorrone.com/jquery.helpers.js'></script>
-<script src='utils.js'></script>
 <script>
 let log = console.log.bind(console);
 
@@ -45,7 +44,7 @@ function jsonToTable(data, id) {
     result += `<tr>`;
     for(key in data[0]) {
         if(key === 'id') continue;
-        result += `<th class='sort'>${key.replace('_', ' ').toTitleCase()}</th>`;
+        result += `<th class='sort'>${toTitleCase(key.replace('_', ' '))}</th>`;
     }
     result += `<th></th>`;
     result += `</tr>`;
@@ -289,6 +288,11 @@ async function loadTable() {
 
     });
 
+}
+function toTitleCase(str) {
+    return str.replace(/\w\S*/g, function(txt) {
+        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+    });
 }
 function escapeHTML(text) {  
     var replacements= {"<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", "\"": "&quot;"};                      
