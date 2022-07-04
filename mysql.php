@@ -16,6 +16,79 @@ if ($_GET) {
         case "connect":
             printr($mysqli, "$username@$hostname");
         break;
+        case "tables":
+            $query = "SHOW TABLES FROM $database";
+            echo json_encode(get_tables());
+        break;
+        case "list":
+            switch($table) {
+                case "pairs":       echo json_encode(get_pairs());       break;
+                case "segments":    echo json_encode(get_segments());    break;
+                case "languages":   echo json_encode(get_languages());   break;
+                case "transitions": echo json_encode(get_transitions()); break;
+            }
+        break;
+        case "insert":
+            switch($table) {
+                case "pair":       echo add_pair($data);                  break;
+                case "segment":    echo add_segment($value);              break;
+                case "language":   echo add_language($value);             break;
+                case "transition": 
+                    $source_language_id = get_or_add_language($data["source_language"]);
+                    $target_language_id = get_or_add_language($data["target_language"]);
+                    echo get_or_add_transition($source_language_id, $target_language_id); 
+                break;
+            }
+        break;
+        case "update":
+            switch($table) {
+                case "segment":    echo update_segment($id, $value);  break;
+                case "language":   echo update_language($id, $value); break;
+                // case "transition": echo update_transition($id, $value); break;
+            }
+        break;
+        case "remove":
+            switch($table) {
+                case "pair":       echo remove_pair($id);       break;
+                case "segment":    echo remove_segment($id);    break;
+                case "language":   echo remove_language($id);   break;
+                case "transition": echo remove_transition($id); break;
+            }
+        break;
+        case "test":
+            $source_segment = "q";
+            $target_segment = "k";
+            $source_language = "Old Turkic";
+            $target_language = "Turkish";
+
+            echo "<pre>";
+
+            printr("count_tables: ", count_tables());
+            printr("get_tables: ", json_encode(get_tables()));
+            printr("get_segments: ", count(get_segments()));
+            printr("get_languages: ", count(get_languages()));
+            printr("get_transitions: ", count(get_transitions()));
+
+            printr("check_segment $source_segment: ", check_segment($source_segment));
+            printr("get_segment $source_segment: ", get_segment($source_segment)[0]["id"]);
+
+            printr("check_segment $target_segment: ", check_segment($target_segment));
+            printr("get_segment $target_segment: ", get_segment($target_segment)[0]["id"]);
+
+            printr("check_language $source_language: ", check_language($source_language));
+            $source_language_id = get_language($source_language)[0]["id"];
+            printr("get_language $source_language: ", $source_language_id);
+
+            printr("check_language $target_language: ", check_language($target_language));
+            $target_language_id = get_language($target_language)[0]["id"];
+            printr("get_language $target_language: ", $target_language_id);
+
+            printr("check_transition $source_language → $target_language: ", check_transition($source_language_id, $target_language_id));
+            $transition = get_transition($source_language_id, $target_language_id)[0];
+            printr("get_transition $source_language → $target_language: ", $transition["id"]);
+
+            echo "</pre>";
+        break;
         case "dump":
             $export = [];
             $export[] = [
@@ -34,80 +107,18 @@ if ($_GET) {
             }
             echo json_encode($export);
         break;
-        case "tables":
-            $query = "SHOW TABLES FROM $database";
-            echo json_encode(get_tables());
-        break;
-        case "test":
-            $source_phone = "q";
-            $target_phone = "k";
-            $source_lang = "Old Turkic";
-            $target_lang = "Turkish";
-
-            echo "<pre>";
-            printr("count_tables: ", count_tables());
-            printr("get_tables: ", json_encode(get_tables()));
-            printr("get_phones: ", count(get_phones()));
-            printr("get_languages: ", count(get_languages()));
-            printr("get_transitions: ", count(get_transitions()));
-
-            printr("check_phone $source_phone: ", check_phone($source_phone));
-            printr("get_phone $source_phone: ", get_phone($source_phone)[0]["id"]);
-
-            printr("check_phone $target_phone: ", check_phone($target_phone));
-            printr("get_phone $target_phone: ", get_phone($target_phone)[0]["id"]);
-
-            printr("check_language $source_lang: ", check_language($source_lang));
-            $source_id = get_language($source_lang)[0]["id"];
-            printr("get_language $source_lang: ", $source_id);
-
-            printr("check_language $target_lang: ", check_language($target_lang));
-            $target_id = get_language($target_lang)[0]["id"];
-            printr("get_language $target_lang: ", $target_id);
-
-            printr("check_transition $source_lang → $target_lang: ", check_transition($source_id, $target_id));
-            $transition = get_transition($source_id, $target_id)[0];
-            printr("get_transition $source_lang → $target_lang: ", $transition["id"]);
-
-            echo "</pre>";
-        break;
-        case "list":
-            switch($table) {
-                case "pairs":       echo json_encode(get_pairs());       break;
-                case "phones":      echo json_encode(get_phones());      break;
-                case "languages":   echo json_encode(get_languages());   break;
-                case "transitions": echo json_encode(get_transitions()); break;
-            }
-        break;
-        case "insert":
-            switch($table) {
-                case "pair":     echo add_pair($data);      break;
-                case "phone":    echo add_phone($value);    break;
-                case "language": echo add_language($value); break;
-            }
-        break;
-        case "update":
-            switch($table) {
-                case "phone":    echo update_phone($id, $value);    break;
-                case "language": echo update_language($id, $value); break;
-            }
-        break;
-        case "remove":
-            switch($table) {
-                case "pair":     echo remove_pair($id);     break;
-                case "phone":    echo remove_phone($id);    break;
-                case "language": echo remove_language($id); break;
-            }
-        break;
         default: break;
     }
 }
+function do_query($query) {
+    GLOBAL $mysqli;
+    $mysqli->query($query) or die($mysqli->error);
+    return $mysqli;
+}
 function get_query($query) {
     GLOBAL $mysqli;
-    $result = $mysqli->query($query);
-    while($row = mysqli_fetch_assoc($result)) {
-        $results[] = $row;
-    }
+    $result = $mysqli->query($query) or die($mysqli->error);
+    while($row = $result->fetch_assoc()) $results[] = $row;
     return $results;
 }
 function count_tables() {
@@ -124,204 +135,174 @@ function get_tables() {
     return $results;
 }
 function get_pairs() {
-    $query = "
-    select id, source_lang, source_phone, target_lang, target_phone from
-    (
-    select pairs.id as id
-    , source_phone.ipa as source_phone
-    , target_phone.ipa as target_phone
-    , source_lang.name as source_lang
-    , target_lang.name as target_lang
-    from pairs
-    inner join phones as source_phone
-    inner join phones as target_phone
-    inner join transitions
-    inner join languages as source_lang
-    inner join languages as target_lang
-    on pairs.source_phone_id = source_phone.id
-    and pairs.target_phone_id = target_phone.id
-    and pairs.transition_id = transitions.id
-    and transitions.source_language_id = source_lang.id
-    and transitions.target_language_id = target_lang.id
-    ) as pairs
-    order by id DESC
+    $query = "SELECT pairs.id AS id, 
+    source_language.value AS source_language, 
+    source_segment.value AS source_segment, 
+    target_language.value AS target_language,
+    target_segment.value AS target_segment
+    FROM pairs
+    INNER JOIN segments AS source_segment
+    INNER JOIN segments AS target_segment
+    INNER JOIN transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON pairs.source_segment_id = source_segment.id
+    AND pairs.target_segment_id = target_segment.id
+    AND pairs.transition_id = transitions.id
+    AND transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    ORDER BY id DESC
     ;";
     return get_query($query);
 }
-function get_phones() {
-    $query = "SELECT id, ipa FROM phones";
+function get_segments() {
+    $query = "SELECT id, value FROM segments";
     foreach(get_query($query) as $row) {
-        $results[$row["id"]] = $row["ipa"];
+        $results[$row["id"]] = $row["value"];
     }
     return $results;
 }
-function check_phone($phone) {
-    $query = "SELECT id, ipa FROM phones WHERE ipa = '$phone'";
+function check_segment($value) {
+    $query = "SELECT id, value FROM segments WHERE value = '$value'";
     $results = get_query($query);
     return !empty($results);
 }
-function get_phone($phone) {
-    GLOBAL $mysqli;
-    $query = "SELECT id, ipa FROM phones WHERE ipa = '$phone'";
+function get_segment($value) {
+    $query = "SELECT id, value FROM segments WHERE value = '$value'";
     return get_query($query);
 }
-function add_phone($phone) {
-    GLOBAL $mysqli;
-    $query = "INSERT INTO phones (ipa) VALUES ('$phone')";
-    $mysqli->query($query);
-    return $mysqli->insert_id;
+function add_segment($value) {
+    $query = "INSERT INTO segments (value) VALUES ('$value')";
+    return do_query($query)->insert_id;
 }
 function get_languages() {
-    GLOBAL $mysqli;
-    $query = "SELECT id, name FROM languages";
+    $query = "SELECT id, value FROM languages";
     foreach(get_query($query) as $row) {
-        $results[$row["id"]] = $row["name"];
+        $results[$row["id"]] = $row["value"];
     }
     return $results;
 }
-function check_language($language) {
-    $query = "SELECT id, name FROM languages WHERE name = '$language'";
+function check_language($value) {
+    $query = "SELECT id, value FROM languages WHERE value = '$value'";
     return count(get_query($query));
 }
-function get_language($language) {
-    GLOBAL $mysqli;
-    $query = "SELECT id, name FROM languages WHERE name = '$language'";
+function get_language($value) {
+    $query = "SELECT id, value FROM languages WHERE value = '$value'";
     return get_query($query);
 }
-function add_language($name) {
-    GLOBAL $mysqli;
-    $query = "INSERT INTO languages (name) VALUES ('$name')";
-    $mysqli->query($query);
-    return $mysqli->insert_id;
+function add_language($value) {
+    $query = "INSERT INTO languages (value) VALUES ('$value')";
+    return do_query($query)->insert_id;
 }
 function get_transitions() {
     $query = "SELECT 
-        transitions.id as transition_id, 
-        source_language_id as source_lang_id,
-        target_language_id as target_lang_id,
-        source_lang.name as source_lang_name, 
-        target_lang.name as target_lang_name,
-        citation,
-        notes
+    transitions.id AS id, 
+    source_language_id AS source_language_id,
+    target_language_id AS target_language_id,
+    source_language.value AS source_language_name, 
+    target_language.value AS target_language_name,
+    citation,
+    notes
     FROM transitions
-    inner join languages as source_lang
-    inner join languages as target_lang
-    on  transitions.source_language_id = source_lang.id
-    and transitions.target_language_id = target_lang.id
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
     ";
     return get_query($query);
 }
 function check_transition($source, $target) {
     $query = "SELECT * FROM transitions
-    where source_language_id = '$source'
-    and   target_language_id = '$target'
+    WHERE source_language_id = '$source'
+    AND   target_language_id = '$target'
     ";
     return !empty(get_query($query));
 }
 function get_transition($source, $target) {
     $query = "SELECT * FROM transitions
-    where source_language_id = '$source'
-    and   target_language_id = '$target'
+    WHERE source_language_id = '$source'
+    AND   target_language_id = '$target'
     ";
     foreach(get_query($query) as $row) {
         $results[] = $row;
     }
     return $results;
 }
-function add_transition($source, $target) {
-    GLOBAL $mysqli;
-    $query = "INSERT INTO transitions (source_language_id, target_language_id) VALUES ('$source', '$target')";
-    mysqli_query($mysqli, $query) or die(mysqli_error($mysqli));
-    return $mysqli->insert_id;
+function add_transition($source_language_id, $target_language_id) {
+    $query = "INSERT INTO transitions (source_language_id, target_language_id) VALUES ('$source_language_id', '$target_language_id')";
+    return do_query($query)->insert_id;
 }
-function get_or_add_phone($phone) {
-    if (check_phone($phone)) {
-        return get_phone($phone)[0]["id"];
-    }
-    else {
-        return add_phone($phone);
-    }
+function get_or_add_segment($segment) {
+    return check_segment($segment) ? get_segment($segment)[0]["id"] : add_segment($segment);
 }
 function get_or_add_language($language) {
-    if (check_language($language)) {
-        return get_language($language)[0]["id"];
-    }
-    else {
-        return add_language($language);
-    }
+    return check_language($language) ? get_language($language)[0]["id"] : add_language($language);
 }
 function get_or_add_transition($source, $target) {
-    if (check_transition($source, $target)) {
-        return get_transition($source, $target)[0]["id"];
-    }
-    else {
-        return add_transition($source, $target);
-    }
-}
-function remove_pair($id) {
-    GLOBAL $mysqli;
-    $query = "DELETE FROM pairs WHERE id='$id'";
-    $mysqli->query($query);
-}
-function update_phone($id, $value) {
-    GLOBAL $mysqli;
-    $query = "UPDATE phones SET ipa = '$value' WHERE id='$id'";
-    $mysqli->query($query);
-}
-function update_language($id, $value) {
-    GLOBAL $mysqli;
-    $query = "UPDATE languages SET name = '$value' WHERE id='$id'";
-    $mysqli->query($query);
-}
-function remove_phone($id) {
-    GLOBAL $mysqli;
-    $query = "DELETE FROM phones WHERE id='$id'";
-    $mysqli->query($query);
-}
-function remove_language($id) {
-    GLOBAL $mysqli;
-    $query = "DELETE FROM languages WHERE id='$id'";
-    $mysqli->query($query);
+    return check_transition($source, $target) ? get_transition($source, $target)[0]["id"] : add_transition($source, $target);
 }
 function add_pair($data, $debug=false) {
-    GLOBAL $mysqli;
-    $source_phone = $data["source_phone"];
-    $target_phone = $data["target_phone"];
-    $source_lang = $data["source_lang"];
-    $target_lang = $data["target_lang"];
+    $source_segment = $data["source_segment"];
+    $target_segment = $data["target_segment"];
+    $source_language = $data["source_language"];
+    $target_language = $data["target_language"];
 
-    $source_phone_id = get_or_add_phone($source_phone);
-    $target_phone_id = get_or_add_phone($target_phone);
+    $source_segment_id = get_or_add_segment($source_segment);
+    $target_segment_id = get_or_add_segment($target_segment);
     if ($debug) {
-        echo "source_phone_id: $source_phone ($source_phone_id)\n";
-        echo "target_phone_id: $target_phone ($target_phone_id)\n";
+        echo "source_segment_id: $source_segment ($source_segment_id)\n";
+        echo "target_segment_id: $target_segment ($target_segment_id)\n";
     }
-    $source_lang_id = get_or_add_language($source_lang);
-    $target_lang_id = get_or_add_language($target_lang);
+    $source_language_id = get_or_add_language($source_language);
+    $target_language_id = get_or_add_language($target_language);
     if ($debug) {
-        echo "source_lang_id: $source_lang ($source_lang_id)\n";
-        echo "target_lang_id: $target_lang ($target_lang_id)\n";
+        echo "source_language_id: $source_language ($source_language_id)\n";
+        echo "target_language_id: $target_language ($target_language_id)\n";
     }
 
-    $transition_id = get_or_add_transition($source_lang_id, $target_lang_id);
+    $transition_id = get_or_add_transition($source_language_id, $target_language_id);
     if ($debug) {
         echo "transition_id: $transition_id\n";
     }
 
-    $query = "select * from pairs
-    where source_phone_id = '$source_phone_id'
-    and target_phone_id = '$target_phone_id'
-    and transition_id = '$transition_id'
+    $query = "SELECT * from pairs
+    WHERE source_segment_id = '$source_segment_id'
+    AND target_segment_id = '$target_segment_id'
+    AND transition_id = '$transition_id'
     ";
     $pair = get_query($query);
     if (!empty($pair)) {
         printr($pair);
     }
     else {
-        $query = "insert into pairs (source_phone_id, target_phone_id, transition_id) values ('$source_phone_id', '$target_phone_id', '$transition_id');";
-        $mysqli->query($query);
-        echo $mysqli->insert_id;
+        $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id) 
+        VALUES ('$source_segment_id', '$target_segment_id', '$transition_id');";
+        echo do_query($query)->insert_id;
     }
+}
+function update_segment($id, $value) {
+    $query = "UPDATE segments SET value = '$value' WHERE id='$id'";
+    do_query($query);
+}
+function update_language($id, $value) {
+    $query = "UPDATE languages SET value = '$value' WHERE id='$id'";
+    do_query($query);
+}
+function remove_pair($id) {
+    $query = "DELETE FROM pairs WHERE id='$id'";
+    do_query($query);
+}
+function remove_segment($id) {
+    $query = "DELETE FROM segments WHERE id='$id'";
+    do_query($query);
+}
+function remove_language($id) {
+    $query = "DELETE FROM languages WHERE id='$id'";
+    do_query($query);
+}
+function remove_transition($id) {
+    $query = "DELETE FROM transitions WHERE id='$id'";
+    do_query($query);
 }
 function printr() {
     foreach (func_get_args() as $i) {

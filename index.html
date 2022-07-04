@@ -7,13 +7,11 @@
 <link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-black.ico' id='psi-black'>
 <style>
 @charset 'UTF-8';
-/* @import 'https://www.matthewmorrone.com/reset.css'; */
 @import 'https://www.matthewmorrone.com/jquery.ui.css';
 @import 'https://www.matthewmorrone.com/font-awesome.min.css';
 @import 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
 @import 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css';
 @import 'https://unpkg.com/@yaireo/tagify/dist/tagify.css';
-@import 'style.css';
 </style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/@yaireo/tagify"></script>
@@ -23,6 +21,7 @@
 <script src='https://matthewmorrone.com/jquery.js'></script>
 <script src='https://matthewmorrone.com/jquery.ui.js'></script>
 <script src='https://matthewmorrone.com/jquery.helpers.js'></script>
+<script src='utils.js'></script>
 <script>
 let log = console.log.bind(console);
 
@@ -44,7 +43,7 @@ function jsonToTable(data, id) {
     result += `<tr>`;
     for(key in data[0]) {
         if(key === 'id') continue;
-        result += `<th class='sort'>${toTitleCase(key.replace('_', ' '))}</th>`;
+        result += `<th class='sort'>${key.replace(/_/g, ' ').toTitleCase()}</th>`;
     }
     result += `<th></th>`;
     result += `</tr>`;
@@ -68,16 +67,16 @@ function submitPair() {
         mode: 'insert',
         table: 'pair',
         data: {
-            source_lang: $('[name=source_lang]').val(),
-            source_phone: $('[name=source_phone]').val(),
-            target_lang: $('[name=target_lang]').val(),
-            target_phone: $('[name=target_phone]').val(),
+            source_language: $('#pairs [name=source_language]').val(),
+            source_segment: $('#pairs [name=source_segment]').val(),
+            target_language: $('#pairs [name=target_language]').val(),
+            target_segment: $('#pairs [name=target_segment]').val(),
         }
     };
-    if(!submit.data.source_lang
-    || !submit.data.source_phone
-    || !submit.data.target_lang
-    || !submit.data.target_phone
+    if(!submit.data.source_language
+    || !submit.data.source_segment
+    || !submit.data.target_language
+    || !submit.data.target_segment
      ) {
         return;
     }
@@ -86,7 +85,36 @@ function submitPair() {
     $.get(url, submit, function(data) {
         console.log(data);
         loadTable();
-    })
+    }).fail(function(e) {
+        showError(e);
+    });
+}
+function submitTransition() {
+    let submit = {
+        debug: true,
+        mode: 'insert',
+        table: 'transition',
+        data: {
+            source_language: $('#transitions [name=transition_source_language]').val(),
+            target_language: $('#transitions [name=transition_target_language]').val(),
+            // citation: $('#citation_span textarea').val(),
+            // notes: $('#notes_span textarea').val(),
+        }
+    };
+    console.log(submit)
+    if(!submit.data.source_language
+    || !submit.data.target_language
+     ) {
+        return;
+    }
+
+    console.log(submit)
+    $.get(url, submit, function(data) {
+        console.log(data);
+        loadTable();
+    }).fail(function(e) {
+        showError(e);
+    });
 }
 function download(filename, text) {
     var element = document.createElement('a');
@@ -103,93 +131,85 @@ function download(filename, text) {
 async function exportData() {
     $.get(url, {mode: 'dump'}, function(data) {
         download("diachron.json", data)
-    })
+    }).fail(function(e) {
+        showError(e);
+    });
+}
+function showError(e) {
+    console.error(e)
+
+    let modal = "#error";
+    let $modal = $(modal);
+    $modal.modal('show');
+
+    $(`${modal} .modal-title`).text(`Error Status ${e.status}`);
+    $(`${modal} .modal-body`).html(e.responseText);
+    $(`${modal} .modal-body`).find("br").remove()
 }
 async function loadTable() {
     let p1 = function() {
         return $.getJSON(url, {mode: 'list', table: 'pairs'}, function(data) {
             if(data.includes('Fatal error')) return;
-            $(`content`).html(`<div>${jsonToTable(data, 'pairs')}</div>`);
-            $('table thead').append(`<tr>
-                <th><span id='source_lang_span'></span></th>
-                <th><span id='source_phone_span'></span></th>
-                <th><span id='target_lang_span'></span></th>
-                <th><span id='target_phone_span'></span></th>
+            $(`content`).html(`<div class="container-fluid">${jsonToTable(data, 'pairs')}</div>`);
+            $('#pairs thead').append(`<tr>
+                <th><span id='source_language_span'></span></th>
+                <th><span id='source_segment_span'></span></th>
+                <th><span id='target_language_span'></span></th>
+                <th><span id='target_segment_span'></span></th>
                 <th><button class='plus'></button></th>
             </tr>`);
         });
     }
     let p2 = function() {
-        return $.getJSON(url, {mode: 'list', table: 'phones'}, function(data) {
-            $('#source_phone_span').html(jsonToDataList(data, 'source_phone'));
-            $('#target_phone_span').html(jsonToDataList(data, 'target_phone'));
+        return $.getJSON(url, {mode: 'list', table: 'segments'}, function(data) {
+            $('#source_segment_span').html(jsonToDataList(data, 'source_segment'));
+            $('#target_segment_span').html(jsonToDataList(data, 'target_segment'));
         });
     }
     let p3 = function() {
         return $.getJSON(url, {mode: 'list', table: 'languages'}, function(data) {
-            $('#source_lang_span').html(jsonToDataList(data, 'source_lang'));
-            $('#target_lang_span').html(jsonToDataList(data, 'target_lang'));
+            $('#source_language_span').html(jsonToDataList(data, 'source_language'));
+            $('#target_language_span').html(jsonToDataList(data, 'target_language'));
         });
     }
     let p4 = function() {
-        $('input').on('change keyup', function() {
-            $('table tbody tr').show();
-            $('table tbody tr').each(function() {
+        $('#pairs input').on('change keyup', function() {
+            $('#pairs tbody tr').show();
+            $('#pairs tbody tr').each(function() {
                 $(this).find("td").slice(0, 4).each(function() {
                     let col = $(this).index();
-                    let val = $("input").eq(col).val();
+                    let val = $("#pairs input").eq(col).val();
                     if (val === '') return;
                     let text = $(this).text();
-                    if (val && text.includes(val)) {
-                        $(this).parent().show();
-                    }
-                    else {
-                        $(this).parent().hide();
-                    }
+                    if (val && text.includes(val)) $(this).parent().show();
+                    else $(this).parent().hide();
                 });
             });
         });
 
-        $('.plus').click(() => {
-            submitPair();
-        })
+        $('#pairs .plus').click(() => submitPair());
         $(document).keyup((e) => {
-            if(e.which === 13) {
-                $('.plus').click();
-            }
+            if (e.which === 13) $('#pairs .plus').click();
         });
 
         // let $confirmDelete = $('#confirmDelete');
-        $('.ex').click(function(e) {
+        $('#pairs .ex').click(function(e) {
             let button = $(e).target();
             let id = button.getAttribute('data-bs-id');
-
             $.get(url, {mode: "remove", table: "pair", id: id}, function(data) {
                 console.log(data);
-                // $confirmDelete.modal('hide');
                 loadTable();
+            }).fail(function(e) {
+                showError(e);
             });
+
             /*
-            let button = $(e).target();
-            let id = button.getAttribute('data-bs-id');
-            [source_lang, source_phone, target_lang, target_phone] = [
-                $(`[pair=${id}]`).find('.source_lang').text(),
-                $(`[pair=${id}]`).find('.source_phone').text(),
-                $(`[pair=${id}]`).find('.target_lang').text(),
-                $(`[pair=${id}]`).find('.target_phone').text()
+            [source_language, source_segment, target_language, target_segment] = [
+                $(`[pair=${id}]`).find('.source_language').text(),
+                $(`[pair=${id}]`).find('.source_segment').text(),
+                $(`[pair=${id}]`).find('.target_language').text(),
+                $(`[pair=${id}]`).find('.target_segment').text()
             ];
-
-            $('.modal-body').html(`${source_phone} → ${target_phone}<br>(${source_lang} → ${target_lang})`);
-
-            $confirmDelete.modal('show');
-
-            $("#confirm").click(function() {
-                $.get(url, {mode: "remove", table: "pair", id: id}, function(data) {
-                    console.log(data);
-                    $confirmDelete.modal('hide');
-                    loadTable();
-                });
-            }) 
             */
         });
 
@@ -229,24 +249,31 @@ async function loadTable() {
             await fn();
         }
         catch(e) {
-            console.log(e)
+            showError(e);
         }
     }
 
-    $(".phones, .languages").click(async function() {
-        $modal = $(".modal");
+    $("#segments, #languages").click(async function() {
+        let modal = "#tagsInput";
+        let $modal = $(modal);
         $modal.modal('show');
         let table = $(this).text();
-        $('.modal-title').text(table);
+        $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries = await $.getJSON(url, {mode: "list", table: table});
+        let entries;
+        try {
+            entries = await $.getJSON(url, {mode: "list", table: table});
+        }
+        catch(e) {
+            showError(e);
+        }
         entries = Object.entries(entries).map(function(entry) {
             return {id: entry[0], value: entry[1]};
         }).filter(function(entry) {
             return entry.value.trim() !== '';
         });
         entries = escapeHTML(JSON.stringify(entries));
-        $('.modal-body').html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
+        $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
         table = table.slice(0, table.length-1);
         let tagInput = document.querySelector('#tags');
         let tagify = new Tagify(tagInput, {hooks: {
@@ -259,52 +286,85 @@ async function loadTable() {
             }
         }});
         tagify.on('add', function(e) {
-            $.get(url, {mode: "insert", table: table, value: e.detail.data.value}, function(data) {});
+            $.get(url, {mode: "insert", table: table, value: e.detail.data.value}, function(data) {}).fail(function(e) {
+                showError(e);
+            });
         }).on('edit:updated', function(e) {
-            $.get(url, {mode: "update", table: table, id: e.detail.data.id, value: e.detail.data.value}, function(data) {});
+            $.get(url, {mode: "update", table: table, id: e.detail.data.id, value: e.detail.data.value}, function(data) {}).fail(function(e) {
+                showError(e);
+            });
         });
     });
 
-    $(".transitions").click(async function() {
-        $modal = $(".modal");
+    $("#transitions").click(async function() {
+        let modal = "#tagsInput";
+        let $modal = $(modal);
         $modal.modal('show');
         let table = $(this).text();
-        $('.modal-title').text(table);
+        $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries = await $.getJSON(url, {mode: "list", table: table});
-        entries = Object.entries(entries).map(function(entry) {
-            entry = entry[1]
+        let entries;
+        try {
+            entries = await $.getJSON(url, {mode: "list", table: table});
+        }
+        catch(e) {
+            showError(e);
+        }
+        entries = Object.values(entries).map(function(entry) {
             return {
-                id: entry.transition_id,
-                ids: `${entry.source_lang_id},${entry.target_lang_id}`,
-                value: `${entry.source_lang_name} → ${entry.target_lang_name}`
+                id: entry.id,
+                source: entry.source_language_name,
+                target: entry.target_language_name,
+                // citation: entry.citation,
+                // notes: entry.notes
             }
         })
-        entries = escapeHTML(JSON.stringify(entries));
-        $('.modal-body').html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
         table = table.slice(0, table.length-1);
-        let tagInput = document.querySelector('#tags');
-        let tagify = new Tagify(tagInput);
 
-    });
+        $(`${modal} .modal-body`).html(`${jsonToTable(entries, "transitions")}`);
+        $('#transitions thead').append(`<tr>
+            <th><span id='transition_source_language_span'></span></th>
+            <th><span id='transition_target_language_span'></span></th>
+            <!--
+            <th><span id='citation_span'></span></th>
+            <th><span id='notes_span'></span></th>
+            -->
+            <th><button class='plus'></button></th>
+        </tr>`);
 
+        let languages = await $.getJSON(url, {mode: 'list', table: 'languages'});
+        $('#transition_source_language_span').html(jsonToDataList(languages, 'transition_source_language'));
+        $('#transition_target_language_span').html(jsonToDataList(languages, 'transition_target_language'));
+        $('#citation_span').html(`<textarea rows=1></textarea>`)
+        $('#notes_span').html(`<textarea rows=1></textarea>`)
+        $("textarea").each(function() {
+            $(this).css("min-width", $(this).width())
+        });
+
+        $('#transitions .plus').click(() => {
+            submitTransition();
+        });
+
+        $('#transitions .ex').click(function(e) {
+            let button = $(e).target();
+            let id = button.getAttribute('data-bs-id');
+            let headers = {mode: "remove", table: "transition", id: id};
+            console.log(headers);
+            $.get(url, headers, function(data) {
+                console.log(data);
+                loadTable();
+            }).fail(function(e) {
+                showError(e);
+            });
+        });
+
+    }).click()
 }
-function toTitleCase(str) {
-    return str.replace(/\w\S*/g, function(txt) {
-        return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
-    });
-}
-function escapeHTML(text) {  
-    var replacements= {"<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", "\"": "&quot;"};                      
-    return text.replace(/[<>&'"]/g, function(character) {  
-        return replacements[character];  
-    }); 
-}
-function setDropdowns(sourceLanguage, sourcePhone, targetLanguage, targetPhone) {
-    $('[name=source_lang]').val(sourceLanguage);
-    $('[name=source_phone]').val(sourcePhone);
-    $('[name=target_lang]').val(targetLanguage);
-    $('[name=target_phone]').val(targetPhone);
+function setDropdowns(sourceLanguage, sourceSegment, targetLanguage, targetSegment) {
+    $('[name=source_language]').val(sourceLanguage);
+    $('[name=source_segment]').val(sourceSegment);
+    $('[name=target_language]').val(targetLanguage);
+    $('[name=target_segment]').val(targetSegment);
 }
 $(function() {
     loadTable();
@@ -319,9 +379,9 @@ $(function() {
     <div id='wrapper'>
         <header>
             <h1>Diachron DB</h1>
-            <button class="btn btn-primary phones">Phones</button>
-            <button class="btn btn-primary languages">Languages</button>
-            <button class="btn btn-primary transitions">Transitions</button>
+            <button class="btn btn-primary" id="segments">Segments</button>
+            <button class="btn btn-primary" id="languages">Languages</button>
+            <button class="btn btn-primary" id="transitions">Transitions</button>
             <button class="btn btn-secondary" id="export">Export Data</button>
         </header>
         <content>
@@ -329,7 +389,7 @@ $(function() {
         <footer>
         </footer>
     </div>
-    <div class="modal" tabindex="-1">
+    <div class="modal fade" id="tagsInput" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
@@ -345,5 +405,52 @@ $(function() {
             </div>
         </div>
     </div>
+    <div class="modal fade" id="error" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content alert alert-block alert-danger">
+                <div class="modal-header">
+                    <h5 class="modal-title">Error</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-block alert-danger"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="confirm" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <style>
+    @import 'style.css';
+    /* 
+    #pairs {
+        width: 80%; 
+        overflow: scroll;
+    } 
+    */
+    .alert {
+        margin-bottom: 0px !important;
+    }
+    .modal-dialog {
+        position: relative;
+        display: table;
+        overflow-y: auto;    
+        overflow-x: auto;
+        width: auto;
+        min-width: 300px;  
+    }
+    .modal-dialog td {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        max-width: 200px;
+    }
+    textarea {
+        resize: both;
+        min-width: 200px;
+        min-height: 26px;
+    }
+    </style>
 </body>
 </html>

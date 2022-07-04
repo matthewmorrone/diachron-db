@@ -55,5 +55,4 @@ th {
 tag::before {
     content: '\A'; 
     white-space: pre;
-
 }
