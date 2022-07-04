@@ -43,10 +43,10 @@ th {
     background-repeat: no-repeat;
 }
 .ex {
-    background: url('ex.svg');
+    background: url('ex.svg') no-repeat;
 }
 .plus {
-    background: url('plus.svg');
+    background: url('plus.svg') no-repeat;
 }
 .inverted {
     filter: 100%;
