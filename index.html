@@ -23,15 +23,14 @@
 <script src='https://matthewmorrone.com/jquery.helpers.js'></script>
 <script src='utils.js'></script>
 <script>
-let log = console.log.bind(console);
-
 let url = `mysql.php`;
 
 function jsonToDataList(options, id) {
     let result = `<input type=text name=${id} list=${id} />`;
     result += `<datalist id='${id}'>`;
-    Object.keys(options).forEach((key, index) => {
-        result += `<option>${options[key]}</option>`;
+    Object.entries(options).forEach(function(entry) {
+        let [key, val] = entry;
+        result += `<option data-id='${key}'>${val}</option>`;
     });
     result += '</datalist>';
     return result;
@@ -63,27 +62,25 @@ function jsonToTable(data, id) {
     return result;
 }
 function submitPair() {
+    let transition = $('#pairs [name=transition]').val();
+
     let submit = {
         mode: 'insert',
         table: 'pair',
+        debug: true,
         data: {
             source_segment: $('#pairs [name=source_segment]').val(),
             target_segment: $('#pairs [name=target_segment]').val(),
-            source_language: $('#pairs [name=source_language]').val(),
-            target_language: $('#pairs [name=target_language]').val(),
+            transition: $(`#pairs #transition option:contains("${transition}")`).attr('data-id'),
         }
     };
     if(!submit.data.source_segment
     || !submit.data.target_segment
-    || !submit.data.source_language
-    || !submit.data.target_language
-     ) {
+    || !submit.data.transition
+    ) {
         return;
     }
-
-    console.log(submit)
     $.get(url, submit, function(data) {
-        console.log(data);
         loadTable();
     }).fail(function(e) {
         showError(e);
@@ -91,7 +88,6 @@ function submitPair() {
 }
 function submitTransition() {
     let submit = {
-        debug: true,
         mode: 'insert',
         table: 'transition',
         data: {
@@ -101,17 +97,13 @@ function submitTransition() {
             // notes: $('#notes_span textarea').val(),
         }
     };
-    console.log(submit)
     if(!submit.data.source_language
     || !submit.data.target_language
      ) {
         return;
     }
-
-    console.log(submit)
     $.get(url, submit, function(data) {
-        console.log(data);
-        loadTable();
+        $("#transitions").click()
     }).fail(function(e) {
         showError(e);
     });
@@ -129,11 +121,8 @@ function download(filename, text) {
     document.body.removeChild(element);
 }
 async function exportData() {
-    $.get(url, {mode: 'dump'}, function(data) {
-        download("diachron.json", data)
-    }).fail(function(e) {
-        showError(e);
-    });
+    let data = await $getJSON(url, {mode: 'dump'});
+    download("diachron.json", JSON.stringify(data));
 }
 function showError(e) {
     console.error(e)
@@ -147,146 +136,153 @@ function showError(e) {
     $(`${modal} .modal-body`).find("br").remove()
 }
 async function loadTable() {
-    let getPairs = function() {
-        return $.getJSON(url, {mode: 'list', table: 'pairs'}, function(data) {
-            if(data.includes('Fatal error')) return;
-            $(`content`).html(`${jsonToTable(data, 'pairs')}`);
-            $('#pairs thead').append(`<tr>
-                <th><span id='source_segment_span'></span></th>
-                <th><span id='target_segment_span'></span></th>
-                <th><span id='source_language_span'></span></th>
-                <th><span id='target_language_span'></span></th>
-                <th><button class='plus'></button></th>
-            </tr>`);
-        });
-    }
-    let getSegmentDropdown = function() {
-        return $.getJSON(url, {mode: 'list', table: 'segments'}, function(data) {
-            $('#source_segment_span').html(jsonToDataList(data, 'source_segment'));
-            $('#target_segment_span').html(jsonToDataList(data, 'target_segment'));
-        });
-    }
-    let getLanguageDropdown = function() {
-        return $.getJSON(url, {mode: 'list', table: 'languages'}, function(data) {
-            $('#source_language_span').html(jsonToDataList(data, 'source_language'));
-            $('#target_language_span').html(jsonToDataList(data, 'target_language'));
-        });
-    }
-    let addFunctionality = function() {
-        $('#pairs input').on('change keyup', function() {
-            $('#pairs tbody tr').show();
-            $('#pairs tbody tr').each(function() {
-                $(this).find("td").slice(0, 4).each(function() {
-                    let col = $(this).index();
-                    let val = $("#pairs input").eq(col).val();
-                    if (val === '') return;
-                    let text = $(this).text();
-                    if (val && text.includes(val)) $(this).parent().show();
-                    else $(this).parent().hide();
-                });
-            });
-        });
 
-        $('#pairs tbody td').click(function() {
-            let $td = $(this);
-            let text = $td.text();
-            let $input = $(`<input class='edit' value='${text}' />`);
-            $td.html($input);
-            $input.select();
-            $input.click(function(e) {
-                return false;
-            });
-            $input.blur(function() {
-                let newText = $(this).val();
-                if (text !== newText) {
-                    let $tr = $(this).parents("tr");
-                    let headers = {
-                        mode: "update",
-                        table: "pair"
-                    }
-                    headers.data = {
-                        id: $tr.attr("pair"),
-                        source_segment: $tr.find('.source_segment').text() || newText,
-                        target_segment: $tr.find('.target_segment').text() || newText,
-                        source_language: $tr.find('.source_language').text() || newText,
-                        target_language: $tr.find('.target_language').text() || newText,
-                    };
-                    console.log(headers)
-                    $.get(url, headers, function(data) {
-                        console.log(data)
-                    })
+    let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'})
+    $(`content`).html(`${jsonToTable(pairs, 'pairs')}`);
+    $('#pairs thead').append(`<tr>
+        <th><span id='source_segment_span'></span></th>
+        <th><span id='target_segment_span'></span></th>
+        <th><span id='source_language_span'></span></th>
+        <th><span id='target_language_span'></span></th>
+        <th><button class='plus'></button></th>
+    </tr>`);
+
+    let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
+    $('#source_segment_span').html(jsonToDataList(segments, 'source_segment'));
+    $('#target_segment_span').html(jsonToDataList(segments, 'target_segment'));
+
+    let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
+    $('#source_language_span').html(jsonToDataList(languages, 'source_language'));
+    $('#target_language_span').html(jsonToDataList(languages, 'target_language'));
+    
+    $('#pairs thead tr').each(function() {
+        $(this).find("th").eq($(this).find("th").length-2).after(`<th class='transition'>Transition</th>`)
+    })
+    $('#pairs thead tr:eq(1) .transition').html(`<span id='transition_span'></span>`);
+
+    let transitionData = await $getJSON(url, {mode: 'list', table: 'transitions'});
+    let transitions = {};
+    for(let i = 0; i < transitionData.length; i++) {
+        let transition = transitionData[i];
+        transitions[transition.id] = `${transition.source_language_name} → ${transition.target_language_name}`;
+    }
+    $('#transition_span').html(jsonToDataList(transitions, 'transition'));
+    $("#pairs tr :nth-child(3)").hide()
+    $("#pairs tr :nth-child(4)").hide()
+
+    $('#pairs tbody tr').each(function() {
+        let source = $(this).find(".source_language").text();
+        let target = $(this).find(".target_language").text();
+        $(this).find("td").eq($(this).find("td").length-2).after(`<td class='transition'>${source} → ${target}</td>`)
+    })
+
+    /*
+    $('#pairs input').on('change keyup', function() {
+        $('#pairs tbody tr').show();
+        $('#pairs tbody tr').each(function() {
+            $(this).find("td").slice(0, 4).each(function() {
+                let col = $(this).index();
+                let val = $("#pairs input").eq(col).val();
+                if (val === '') return;
+                let text = $(this).text();
+                if (val && text.includes(val)) $(this).parent().fadeIn();
+                else {
+                    $(this).parent().fadeOut();
                 }
-                $td.text(newText)
-            });
-            $input.keydown(function(e) {
-                if (e.which === 13) $input.blur();
             });
         });
+    });
+    */
 
-        $('#pairs .plus').click(() => submitPair());
-        $('#pairs thead input').keyup((e) => {
-            if (e.which === 13) $('#pairs .plus').click();
+
+    $('#pairs tbody td:not(.transition)').click(function() {
+        let $td = $(this);
+        let text = $td.text();
+        let $input = $(`<input class='edit' value='${text}' />`);
+        $td.html($input);
+        $input.select();
+        $input.click(function(e) {
+            return false;
         });
-
-        $('#pairs .ex').click(function(e) {
-            let button = $(e).target();
-            let id = button.getAttribute('data-bs-id');
-            $.get(url, {mode: "remove", table: "pair", id: id}, function(data) {
-                console.log(data);
-                loadTable();
-            }).fail(function(e) {
-                showError(e);
-            });
-
-            /*
-            [source_segment, target_segment, source_language, target_language] = [
-                $(`[pair=${id}]`).find('.source_segment').text(),
-                $(`[pair=${id}]`).find('.target_segment').text(),
-                $(`[pair=${id}]`).find('.source_language').text(),
-                $(`[pair=${id}]`).find('.target_language').text(),
-            ];
-            */
+        $input.blur(function() {
+            let newText = $(this).val();
+            if (text !== newText) {
+                let $tr = $(this).parents("tr");
+                let headers = {
+                    mode: "update",
+                    table: "pair"
+                }
+                headers.data = {
+                    id: $tr.attr("pair"),
+                    source_segment: $tr.find('.source_segment').text() || newText,
+                    target_segment: $tr.find('.target_segment').text() || newText,
+                    source_language: $tr.find('.source_language').text() || newText,
+                    target_language: $tr.find('.target_language').text() || newText,
+                };
+                console.log(headers)
+                $.get(url, headers, function(data) {
+                    console.log(data)
+                })
+            }
+            $td.text(newText)
         });
-
-        $('.sort').click(function() {
-            $('.sort i').remove();
-            let col = $(this).index();
-            let dir = $(this).attr("dir");
-            if (!dir) {
-                $('#pairs tbody tr').sort((a, b) => {
-                    return $(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
-                }).appendTo('#pairs tbody');
-                $(this).attr("dir", 1);
-                $(this).append(`<i class='bi bi-arrow-down'></i>`);
-            }
-            else if (dir == 1) {
-                $('#pairs tbody tr').sort((a, b) => {
-                    return -$(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
-                }).appendTo('#pairs tbody');
-                $(this).attr("dir", -1);
-                $(this).append(`<i class='bi bi-arrow-up'></i>`);
-            }
-            else if (dir == -1) {
-                $('#pairs tbody tr').sort((a, b) => {
-                    return $(a).attr("pair") - $(b).attr("pair");
-                }).appendTo('#pairs tbody');
-                $(this).removeAttr("dir");
-                $(this).find('i').remove();
-            }
+        $input.keydown(function(e) {
+            if (e.which === 13) $input.blur();
         });
-    }
-    let setDummyData = function() {
-        setDropdowns("a", "b", "Proto-Germanic", "Old Norse");
-    };
+    });
 
-    for(let fn of [getPairs, getSegmentDropdown, getLanguageDropdown, addFunctionality]) {
-        try {
-            await fn();
-        }
-        catch(e) {
+    $('#pairs .plus').click(() => submitPair());
+    $('#pairs thead input').keyup((e) => {
+        if (e.which === 13) $('#pairs .plus').click();
+    });
+
+    $('#pairs .ex').click(function(e) {
+        let button = $(e).target();
+        let id = button.getAttribute('data-bs-id');
+        $.get(url, {mode: "remove", table: "pair", id: id}, function(data) {
+            console.log(data);
+            loadTable();
+        }).fail(function(e) {
             showError(e);
+        });
+
+        /*
+        [source_segment, target_segment, source_language, target_language] = [
+            $(`[pair=${id}]`).find('.source_segment').text(),
+            $(`[pair=${id}]`).find('.target_segment').text(),
+            $(`[pair=${id}]`).find('.source_language').text(),
+            $(`[pair=${id}]`).find('.target_language').text(),
+        ];
+        */
+    });
+
+    $('.sort').click(function() {
+        $('.sort i').remove();
+        let col = $(this).index();
+        let dir = $(this).attr("dir");
+        if (!dir) {
+            $('#pairs tbody tr').sort((a, b) => {
+                return $(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
+            }).appendTo('#pairs tbody');
+            $(this).attr("dir", 1);
+            $(this).append(`<i class='bi bi-arrow-down'></i>`);
         }
-    }
+        else if (dir == 1) {
+            $('#pairs tbody tr').sort((a, b) => {
+                return -$(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
+            }).appendTo('#pairs tbody');
+            $(this).attr("dir", -1);
+            $(this).append(`<i class='bi bi-arrow-up'></i>`);
+        }
+        else if (dir == -1) {
+            $('#pairs tbody tr').sort((a, b) => {
+                return $(a).attr("pair") - $(b).attr("pair");
+            }).appendTo('#pairs tbody');
+            $(this).removeAttr("dir");
+            $(this).find('i').remove();
+        }
+    });
+    // setDropdowns("a", "b", "Proto-Germanic → Old Norse");
 
     $("#segments, #languages").click(async function() {
         let modal = "#tagsInput";
@@ -295,13 +291,7 @@ async function loadTable() {
         let table = $(this).text();
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries;
-        try {
-            entries = await $.getJSON(url, {mode: "list", table: table});
-        }
-        catch(e) {
-            showError(e);
-        }
+        let entries = await $getJSON(url, {mode: "list", table: table});
         entries = Object.entries(entries).map(function(entry) {
             return {id: entry[0], value: entry[1]};
         }).filter(function(entry) {
@@ -338,13 +328,7 @@ async function loadTable() {
         let table = $(this).text();
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries;
-        try {
-            entries = await $.getJSON(url, {mode: "list", table: table});
-        }
-        catch(e) {
-            showError(e);
-        }
+        let entries = await $getJSON(url, {mode: "list", table: table});
         entries = Object.values(entries).map(function(entry) {
             return {
                 id: entry.id,
@@ -367,7 +351,7 @@ async function loadTable() {
             <th><button class='plus'></button></th>
         </tr>`);
 
-        let languages = await $.getJSON(url, {mode: 'list', table: 'languages'});
+        let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
         $('#transition_source_language_span').html(jsonToDataList(languages, 'transition_source_language'));
         $('#transition_target_language_span').html(jsonToDataList(languages, 'transition_target_language'));
         $('#citation_span').html(`<textarea rows=1></textarea>`);
@@ -384,21 +368,28 @@ async function loadTable() {
             let button = $(e).target();
             let id = button.getAttribute('data-bs-id');
             let headers = {mode: "remove", table: "transition", id: id};
-            console.log(headers);
             $.get(url, headers, function(data) {
-                console.log(data);
-                loadTable();
+                $("#transitions").click();
             }).fail(function(e) {
                 showError(e);
             });
         });
     });
 }
-function setDropdowns(sourceSegment, targetSegment, sourceLanguage, targetLanguage) {
+async function $getJSON(url, data) {
+    let result = -1;
+    try {
+        result = await $.getJSON(url, data);
+    }
+    catch(e) {
+        showError(e);
+    }
+    return result;
+}
+function setDropdowns(sourceSegment, targetSegment, transition) {
     $('[name=source_segment]').val(sourceSegment);
     $('[name=target_segment]').val(targetSegment);
-    $('[name=source_language]').val(sourceLanguage);
-    $('[name=target_language]').val(targetLanguage);
+    $('[name=transition]').val(transition);
 }
 $(function() {
     loadTable();
@@ -484,11 +475,12 @@ $(function() {
         min-width: 200px;
         min-height: 26px;
     }
-    /*     
     input:focus, textarea:focus {
         outline: none;
     } 
-    */
+    .transition input {
+        float: left;
+    }
     .edit {
         outline: none;
         border: 0px;
