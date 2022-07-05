@@ -147,10 +147,10 @@ function showError(e) {
     $(`${modal} .modal-body`).find("br").remove()
 }
 async function loadTable() {
-    let p1 = function() {
+    let getPairs = function() {
         return $.getJSON(url, {mode: 'list', table: 'pairs'}, function(data) {
             if(data.includes('Fatal error')) return;
-            $(`content`).html(`<div class="container-fluid">${jsonToTable(data, 'pairs')}</div>`);
+            $(`content`).html(`${jsonToTable(data, 'pairs')}`);
             $('#pairs thead').append(`<tr>
                 <th><span id='source_language_span'></span></th>
                 <th><span id='source_segment_span'></span></th>
@@ -160,19 +160,19 @@ async function loadTable() {
             </tr>`);
         });
     }
-    let p2 = function() {
+    let getSegmentDropdown = function() {
         return $.getJSON(url, {mode: 'list', table: 'segments'}, function(data) {
             $('#source_segment_span').html(jsonToDataList(data, 'source_segment'));
             $('#target_segment_span').html(jsonToDataList(data, 'target_segment'));
         });
     }
-    let p3 = function() {
+    let getLanguageDropdown = function() {
         return $.getJSON(url, {mode: 'list', table: 'languages'}, function(data) {
             $('#source_language_span').html(jsonToDataList(data, 'source_language'));
             $('#target_language_span').html(jsonToDataList(data, 'target_language'));
         });
     }
-    let p4 = function() {
+    let addFunctionality = function() {
         $('#pairs input').on('change keyup', function() {
             $('#pairs tbody tr').show();
             $('#pairs tbody tr').each(function() {
@@ -187,12 +187,47 @@ async function loadTable() {
             });
         });
 
+        $('#pairs tbody td').click(function() {
+            let $td = $(this);
+            let text = $td.text();
+            let $input = $(`<input class='edit' value='${text}' />`);
+            $td.html($input);
+            $input.select();
+            $input.click(function(e) {
+                return false;
+            });
+            $input.blur(function() {
+                let newText = $(this).val();
+                if (text !== newText) {
+                    let $tr = $(this).parents("tr");
+                    let headers = {
+                        mode: "update",
+                        table: "pair"
+                    }
+                    headers.data = {
+                        id: $tr.attr("pair"),
+                        source_language: $tr.find('.source_language').text() || newText,
+                        source_segment: $tr.find('.source_segment').text() || newText,
+                        target_language: $tr.find('.target_language').text() || newText,
+                        target_segment: $tr.find('.target_segment').text() || newText
+                    };
+                    console.log(headers)
+                    $.get(url, headers, function(data) {
+                        console.log(data)
+                    })
+                }
+                $td.text(newText)
+            });
+            $input.keydown(function(e) {
+                if (e.which === 13) $input.blur();
+            });
+        });
+
         $('#pairs .plus').click(() => submitPair());
-        $(document).keyup((e) => {
+        $('#pairs thead input').keyup((e) => {
             if (e.which === 13) $('#pairs .plus').click();
         });
 
-        // let $confirmDelete = $('#confirmDelete');
         $('#pairs .ex').click(function(e) {
             let button = $(e).target();
             let id = button.getAttribute('data-bs-id');
@@ -214,7 +249,7 @@ async function loadTable() {
         });
 
         $('.sort').click(function() {
-            $('.sort i').remove()
+            $('.sort i').remove();
             let col = $(this).index();
             let dir = $(this).attr("dir");
             if (!dir) {
@@ -240,11 +275,11 @@ async function loadTable() {
             }
         });
     }
-    let p5 = function() {
+    let setDummyData = function() {
         setDropdowns("Proto-Germanic", "a", "Old Norse", "b");
-    }
+    };
 
-    for(let fn of [p1, p2, p3, p4]) {
+    for(let fn of [getPairs, getSegmentDropdown, getLanguageDropdown, addFunctionality]) {
         try {
             await fn();
         }
@@ -317,8 +352,8 @@ async function loadTable() {
                 target: entry.target_language_name,
                 // citation: entry.citation,
                 // notes: entry.notes
-            }
-        })
+            };
+        });
         table = table.slice(0, table.length-1);
 
         $(`${modal} .modal-body`).html(`${jsonToTable(entries, "transitions")}`);
@@ -335,10 +370,10 @@ async function loadTable() {
         let languages = await $.getJSON(url, {mode: 'list', table: 'languages'});
         $('#transition_source_language_span').html(jsonToDataList(languages, 'transition_source_language'));
         $('#transition_target_language_span').html(jsonToDataList(languages, 'transition_target_language'));
-        $('#citation_span').html(`<textarea rows=1></textarea>`)
-        $('#notes_span').html(`<textarea rows=1></textarea>`)
+        $('#citation_span').html(`<textarea rows=1></textarea>`);
+        $('#notes_span').html(`<textarea rows=1></textarea>`);
         $("textarea").each(function() {
-            $(this).css("min-width", $(this).width())
+            $(this).css("min-width", $(this).width());
         });
 
         $('#transitions .plus').click(() => {
@@ -422,12 +457,11 @@ $(function() {
     </div>
     <style>
     @import 'style.css';
-    /* 
-    #pairs {
-        width: 80%; 
-        overflow: scroll;
-    } 
-    */
+    content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
     .alert {
         margin-bottom: 0px !important;
     }
@@ -449,6 +483,19 @@ $(function() {
         resize: both;
         min-width: 200px;
         min-height: 26px;
+    }
+    /*     
+    input:focus, textarea:focus {
+        outline: none;
+    } 
+    */
+    .edit {
+        outline: none;
+        border: 0px;
+        width: 100%;
+        height: 100%;
+        padding: 0px;
+        margin: 0px;
     }
     </style>
 </body>
