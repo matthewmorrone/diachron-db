@@ -137,10 +137,10 @@ function get_tables() {
 }
 function get_pairs() {
     $query = "SELECT pairs.id AS id, 
-    source_language.value AS source_language, 
     source_segment.value AS source_segment, 
-    target_language.value AS target_language,
-    target_segment.value AS target_segment
+    target_segment.value AS target_segment,
+    source_language.value AS source_language, 
+    target_language.value AS target_language
     FROM pairs
     INNER JOIN segments AS source_segment
     INNER JOIN segments AS target_segment

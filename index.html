@@ -67,16 +67,16 @@ function submitPair() {
         mode: 'insert',
         table: 'pair',
         data: {
-            source_language: $('#pairs [name=source_language]').val(),
             source_segment: $('#pairs [name=source_segment]').val(),
-            target_language: $('#pairs [name=target_language]').val(),
             target_segment: $('#pairs [name=target_segment]').val(),
+            source_language: $('#pairs [name=source_language]').val(),
+            target_language: $('#pairs [name=target_language]').val(),
         }
     };
-    if(!submit.data.source_language
-    || !submit.data.source_segment
-    || !submit.data.target_language
+    if(!submit.data.source_segment
     || !submit.data.target_segment
+    || !submit.data.source_language
+    || !submit.data.target_language
      ) {
         return;
     }
@@ -152,10 +152,10 @@ async function loadTable() {
             if(data.includes('Fatal error')) return;
             $(`content`).html(`${jsonToTable(data, 'pairs')}`);
             $('#pairs thead').append(`<tr>
-                <th><span id='source_language_span'></span></th>
                 <th><span id='source_segment_span'></span></th>
-                <th><span id='target_language_span'></span></th>
                 <th><span id='target_segment_span'></span></th>
+                <th><span id='source_language_span'></span></th>
+                <th><span id='target_language_span'></span></th>
                 <th><button class='plus'></button></th>
             </tr>`);
         });
@@ -206,10 +206,10 @@ async function loadTable() {
                     }
                     headers.data = {
                         id: $tr.attr("pair"),
-                        source_language: $tr.find('.source_language').text() || newText,
                         source_segment: $tr.find('.source_segment').text() || newText,
+                        target_segment: $tr.find('.target_segment').text() || newText,
+                        source_language: $tr.find('.source_language').text() || newText,
                         target_language: $tr.find('.target_language').text() || newText,
-                        target_segment: $tr.find('.target_segment').text() || newText
                     };
                     console.log(headers)
                     $.get(url, headers, function(data) {
@@ -239,11 +239,11 @@ async function loadTable() {
             });
 
             /*
-            [source_language, source_segment, target_language, target_segment] = [
-                $(`[pair=${id}]`).find('.source_language').text(),
+            [source_segment, target_segment, source_language, target_language] = [
                 $(`[pair=${id}]`).find('.source_segment').text(),
+                $(`[pair=${id}]`).find('.target_segment').text(),
+                $(`[pair=${id}]`).find('.source_language').text(),
                 $(`[pair=${id}]`).find('.target_language').text(),
-                $(`[pair=${id}]`).find('.target_segment').text()
             ];
             */
         });
@@ -276,7 +276,7 @@ async function loadTable() {
         });
     }
     let setDummyData = function() {
-        setDropdowns("Proto-Germanic", "a", "Old Norse", "b");
+        setDropdowns("a", "b", "Proto-Germanic", "Old Norse");
     };
 
     for(let fn of [getPairs, getSegmentDropdown, getLanguageDropdown, addFunctionality]) {
@@ -307,7 +307,7 @@ async function loadTable() {
         }).filter(function(entry) {
             return entry.value.trim() !== '';
         });
-        entries = escapeHTML(JSON.stringify(entries));
+        entries = JSON.stringify(entries).escapeHTML();
         $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
         table = table.slice(0, table.length-1);
         let tagInput = document.querySelector('#tags');
@@ -394,11 +394,11 @@ async function loadTable() {
         });
     });
 }
-function setDropdowns(sourceLanguage, sourceSegment, targetLanguage, targetSegment) {
-    $('[name=source_language]').val(sourceLanguage);
+function setDropdowns(sourceSegment, targetSegment, sourceLanguage, targetLanguage) {
     $('[name=source_segment]').val(sourceSegment);
-    $('[name=target_language]').val(targetLanguage);
     $('[name=target_segment]').val(targetSegment);
+    $('[name=source_language]').val(sourceLanguage);
+    $('[name=target_language]').val(targetLanguage);
 }
 $(function() {
     loadTable();

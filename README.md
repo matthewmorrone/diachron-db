@@ -3,6 +3,9 @@ Database of Historical Sound Changes
 
 todo:
 + collapse source language and target language into a single dropdown of pairs
++ edit-in-place functionality for transitions modal
++ use autocomplete/suggestion dropdowns for edit-in-place
++ consider adding in citation and notes fields
 + show charts and graphs, for example directed graph of languages
   + https://js.cytoscape.org/
   + https://www.graphdracula.net/
