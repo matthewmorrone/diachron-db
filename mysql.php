@@ -353,6 +353,7 @@ function update_language($id, $value) {
 }
 function remove_pair($id) {
     $query = "DELETE FROM pairs WHERE id='$id'";
+    echo $query;
     do_query($query);
     echo "remove_pair $id";
 }

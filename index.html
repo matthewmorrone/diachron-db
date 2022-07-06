@@ -430,6 +430,8 @@ function setDropdowns(sourceSegment, targetSegment, transition) {
     $('#transition').val(transition);
 }
 $(function() {
+    $.ajaxSetup({ cache: false });
+
     loadTable();
 
     $("#export").click(function() {
