@@ -261,7 +261,7 @@ function get_or_add_segment($segment) {
 function get_or_add_language($language) {
     return check_language($language) ? get_language($language)[0]["id"] : add_language($language);
 }
-function get_or_add_transition($source, $target, $citation) {
+function get_or_add_transition($source, $target, $citation='') {
     return check_transition($source, $target) ? get_transition($source, $target)[0]["id"] : add_transition($source, $target, $citation);
 }
 function update_pair($data, $debug=false) {
