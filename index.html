@@ -242,7 +242,7 @@ async function loadTable() {
         let button = e.target;
         let id = button.getAttribute('data-bs-id');
 
-        let headers = {mode: "remove", table: "pair", id: id};
+        let headers = {debug: true, mode: "remove", table: "pair", id: id};
         console.log(headers)
         let result = await $get(url, headers);
         console.log(result);

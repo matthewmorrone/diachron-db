@@ -34,3 +34,7 @@ $database = (isset($database) ? $database : "diachron");
   + https://www.sigmajs.org/
   + https://visjs.org/#gallery
   + https://bl.ocks.org/cjrd/6863459
++ if this is ever made more widely available, will need:
+  + sql injection prevent / input sanitization
+  + regular backups of data, data approval
+  + view and edit modes

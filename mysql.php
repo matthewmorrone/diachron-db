@@ -328,13 +328,15 @@ function add_pair($data, $debug=false) {
     AND target_segment_id = '$target_segment_id'
     AND transition_id = '$transition_id'
     ";
+    if ($debug) echo $query;
     $pair = get_query($query);
     if (!empty($pair)) {
-        echo "add_pair ".json_encode($pair);
+        echo "pair already exists: ".json_encode($pair);
     }
     else {
         $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id) 
         VALUES ('$source_segment_id', '$target_segment_id', '$transition_id');";
+        if ($debug) echo $query;
         $result = do_query($query)->insert_id;
         echo "add_pair $source_segment_id $target_segment_id $transition_id $result";
     }
