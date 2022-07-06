@@ -27,7 +27,8 @@ $database = (isset($database) ? $database : "diachron");
 + implement custom combobox
 + move modals to html imports
 + figure out "or" behavior for row filtering
-+ consider adding in environment for pairs, and citation and notes fields for transitions
++ consider adding in environment data for pairs: alternatively, encourage specific segment notation
++ consider notes field for pairs and transitions
 + show charts and graphs, for example directed graph of languages
   + https://js.cytoscape.org/
   + https://www.graphdracula.net/

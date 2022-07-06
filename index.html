@@ -103,15 +103,18 @@ async function submitTransition() {
     let submit = {
         mode: 'insert',
         table: 'transition',
+        debug: true,
         data: {
-            source_language: $('#transition_source_language :selected').text(),
-            target_language: $('#transition_target_language :selected').text(),
+            source_language: $('#transition_source_language').val(),
+            target_language: $('#transition_target_language').val(),
+            citation: $('#transition_citation').val(),
         }
     };
     console.log(submit)
     if(!submit.data.source_language || !submit.data.target_language) return;
 
     let result = await $get(url, submit);
+    console.log(result);
     if (result) $("#transitions").click()
 }
 function download(filename, text) {
@@ -182,7 +185,7 @@ async function loadTable() {
     let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
     $('#transition_span').html(`<input type="text" id='transition' />`);
 
-    $("input").on("focus", function(e) {
+    $("#pairs input").on("focus", function(e) {
         $selectedInput = $(this);
         keyboard.setOptions({
             inputName: $(e)[0].target.id
@@ -324,11 +327,13 @@ async function loadTable() {
         let entries = await $getJSON(url, {mode: "list", table: table});
         entries = Object.entries(entries).map(function(entry) {
             let [id, val] = entry;
-            let [source, target] = val.split(" → ")
+            let [source, target] = val[0].split(" → ")
+            let citation = val[1];
             return {
                 id: id,
                 source_language: source,
-                target_language: target
+                target_language: target,
+                citation: citation
             };
         });
         table = table.slice(0, table.length-1);
@@ -343,6 +348,7 @@ async function loadTable() {
         $('#transitions thead').append(`<tr>
             <th><span id='transition_source_language_span'></span></th>
             <th><span id='transition_target_language_span'></span></th>
+            <th><span id='transition_citation_span'></span></th>
             <th><button class='plus'></button></th>
         </tr>`);
 
@@ -350,21 +356,21 @@ async function loadTable() {
 
         $('#transition_source_language_span').html(`<input type="text" id='transition_source_language' />`);
         $('#transition_target_language_span').html(`<input type="text" id='transition_target_language' />`);
+        $('#transition_citation_span').html(`<input type="text" id='transition_citation' />`);
 
         $('#transitions .plus').click(() => {
             submitTransition();
         });
 
         // this is breaking when the modal is closed and reopened
+        // or when just using it twice in a row
         $('#transitions tbody td:not(.ex-td)').click(function() {
             let $td = $(this);
             let text = $td.text();
             let $input = $(`<input class='edit' value='${text}' />`);
             $td.html($input);
             $input.select();
-            $input.click(function(e) {
-                return false;
-            });
+            $input.click(function(e) { return false; });
             $input.blur(async function() {
                 let newText = $(this).val();
                 if (text !== newText) {
@@ -377,16 +383,15 @@ async function loadTable() {
                         id: $tr.attr("transition"),
                         source_language: $tr.find('.source_language').text() || newText,
                         target_language: $tr.find('.target_language').text() || newText,
+                        citation: $tr.find('.citation').text() || newText,
                     };
                     let result = await $get(url, headers);
                     console.log(result);
                     if (result) loadTable();
                 }
-                $td.text(newText)
+                $td.text(newText);
             });
-            $input.keydown(function(e) {
-                if (e.which === 13) $input.blur();
-            });
+            $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
         });
 
         $('#transitions .ex').click(async function(e) {
@@ -402,7 +407,8 @@ async function loadTable() {
             loadTable();
         });
 
-    });
+    }).click()
+    ;
 }
 async function $get(url, data) {
     let result = false;

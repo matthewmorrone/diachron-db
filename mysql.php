@@ -36,7 +36,8 @@ if ($_GET) {
                 case "transition": 
                     $source_language_id = get_or_add_language($data["source_language"]);
                     $target_language_id = get_or_add_language($data["target_language"]);
-                    echo get_or_add_transition($source_language_id, $target_language_id); 
+                    $citation = $data["citation"];
+                    echo get_or_add_transition($source_language_id, $target_language_id, $citation); 
                 break;
             }
         break;
@@ -196,9 +197,11 @@ function add_language($value) {
     return do_query($query)->insert_id;
 }
 function get_transitions() {
+    // add option for retrieval of citations
     $query = "SELECT 
     transitions.id AS id, 
-    CONCAT(source_language.value, ' → ', target_language.value) as transition
+    CONCAT(source_language.value, ' → ', target_language.value) as transition,
+    citation
     FROM transitions
     INNER JOIN languages AS source_language
     INNER JOIN languages AS target_language
@@ -206,7 +209,7 @@ function get_transitions() {
     AND transitions.target_language_id = target_language.id
     ";
     foreach(get_query($query) as $row) {
-        $results[$row["id"]] = $row["transition"];
+        $results[$row["id"]] = [$row["transition"], $row["citation"]];
     }
     return $results;
 }
@@ -232,6 +235,7 @@ function update_transition($data, $debug=false) {
 
     $source_language = $data["source_language"];
     $target_language = $data["target_language"];
+    $citation = $data["citation"];
 
     $source_language_id = get_or_add_language($source_language);
     $target_language_id = get_or_add_language($target_language);
@@ -239,15 +243,16 @@ function update_transition($data, $debug=false) {
     $query = "UPDATE transitions 
     SET source_language_id = '$source_language_id' 
     , target_language_id = '$target_language_id'
+    , citation = '$citation'
     WHERE id='$id'";
     
     do_query($query);
-    echo "update_pair $id $source_language_id $target_language_id";
+    echo "update_transition $id $source_language_id $target_language_id $citation\n";
 }
-function add_transition($source_language_id, $target_language_id) {
-    $query = "INSERT INTO transitions (source_language_id, target_language_id) VALUES ('$source_language_id', '$target_language_id')";
+function add_transition($source_language_id, $target_language_id, $citation='') {
+    $query = "INSERT INTO transitions (source_language_id, target_language_id, citation) VALUES ('$source_language_id', '$target_language_id', '$citation')";
     $result = do_query($query)->insert_id;
-    echo "add_transition $source_language_id $target_language_id $result";
+    echo "add_transition $source_language_id $target_language_id $citation $result\n";
     return $result;
 }
 function get_or_add_segment($segment) {
@@ -256,8 +261,8 @@ function get_or_add_segment($segment) {
 function get_or_add_language($language) {
     return check_language($language) ? get_language($language)[0]["id"] : add_language($language);
 }
-function get_or_add_transition($source, $target) {
-    return check_transition($source, $target) ? get_transition($source, $target)[0]["id"] : add_transition($source, $target);
+function get_or_add_transition($source, $target, $citation) {
+    return check_transition($source, $target) ? get_transition($source, $target)[0]["id"] : add_transition($source, $target, $citation);
 }
 function update_pair($data, $debug=false) {
     $id = $data["id"];
