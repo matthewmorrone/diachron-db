@@ -70,23 +70,33 @@ function jsonToTable(data, id) {
     return result;
 }
 async function submitPair() {
+    let transition = $(`#transition`).val();
+    if (transition.includes(",")) transition = transition.split(",");
+    else if (transition.includes(" → ")) transition = transition.split(" → ");
+    else return;
+    let [source_language, target_language] = transition;
+
     let submit = {
         mode: 'insert',
         table: 'pair',
         debug: true,
         data: {
-            source_segment: $('#source_segment :selected').text(),
-            target_segment: $('#target_segment :selected').text(),
-            transition: $(`#transition`).val(),
+            source_segment: $('#source_segment').val(),
+            target_segment: $('#target_segment').val(),
+            source_language: source_language,
+            target_language: target_language,
         }
     };
+    console.log(submit)
     if(!submit.data.source_segment
     || !submit.data.target_segment
-    || !submit.data.transition
+    || !submit.data.source_language
+    || !submit.data.target_language
     ) {
         return;
     }
     let result = await $get(url, submit);
+    console.log(result);
     if (result) loadTable();
 }
 async function submitTransition() {
@@ -129,7 +139,30 @@ function showError(e) {
     $(`${modal} .modal-body`).find("br").remove()
 }
 
-let keyboard;
+keyboard = '';
+$selectedInput = '';
+
+function makeKeyboard() {
+    if (!keyboard) {
+        keyboard = new window.SimpleKeyboard.default({
+            preventMouseDownDefault: false,
+            preventMouseUpDefault: false,
+            layout: {
+                'default': [
+                    'β ç ɗ ɖ ð ɟ ɢ ɦ ħ ʜ ɭ ɬ ɮ ʟ ʎ ɱ ɰ ŋ ɳ ɲ ɴ',
+                    'ɸ ɹ ɻ ɾ ɽ ʀ ʁ ʂ ʃ θ ʈ ʋ ɣ ʍ χ ʐ ʒ ʔ ʕ ʡ ʢ',
+                    'ɑ ɐ ɒ æ ə ɘ ɵ ɚ ɛ ɜ ɝ ɞ ɨ ɪ ɔ ø œ ɶ ɥ ʌ ʊ ʉ ɯ ɤ ʏ',
+                    'ˈ ˌ ː ˑ ʼ ʴ ʰ ʱ ʲ ʷ ˠ ˤ',
+                    '˞ ̃ ̆ ̈ ̽ ̚ ̋ ́ ̄ ̀ ̏ ̌ ̂ ̊ ̥ ̤ ̪ ̬ ̰ ̺ ̼ ̻ ̹ ̜ ̟ ̠ ̝ ̩ ̞ ̯ ̘ ̙'
+                ]
+            },
+            onKeyPress: function(input) {
+                $selectedInput.val($selectedInput.val()+input);
+                $selectedInput.focus();
+            }
+        });
+    }
+}
 
 async function loadTable() {
 
@@ -149,36 +182,13 @@ async function loadTable() {
     let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
     $('#transition_span').html(`<input type="text" id='transition' />`);
 
-    let $selectedInput;
-    
-    if (!keyboard) {
-        keyboard = new window.SimpleKeyboard.default({
-            preventMouseDownDefault: false,
-            preventMouseUpDefault: false,
-            layout: {
-                'default': [
-                    'β ç ɗ ɖ ð ɟ ɢ ɦ ħ ʜ ɭ ɬ ɮ ʟ ʎ ɱ ɰ ŋ ɳ ɲ ɴ',
-                    'ɸ ɹ ɻ ɾ ɽ ʀ ʁ ʂ ʃ θ ʈ ʋ ɣ ʍ χ ʐ ʒ ʔ ʕ ʡ ʢ',
-                    'ɑ ɐ ɒ æ ə ɘ ɵ ɚ ɛ ɜ ɝ ɞ ɨ ɪ ɔ ø œ ɶ ɥ ʌ ʊ ʉ ɯ ɤ ʏ',
-                    'ˈ ˌ ː ˑ ʼ ʴ ʰ ʱ ʲ ʷ ˠ ˤ',
-                    '˞ ̃ ̆ ̈ ̽ ̚ ̋ ́ ̄ ̀ ̏ ̌ ̂ ̊ ̥ ̤ ̪ ̬ ̰ ̺ ̼ ̻ ̹ ̜ ̟ ̠ ̝ ̩ ̞ ̯ ̘ ̙'
-                ]
-            },
-            onKeyPress: function(input) {
-                $selectedInput.val($selectedInput.val()+input);
-                $selectedInput.focus();
-            }
+    $("input").on("focus", function(e) {
+        console.log( $(e)[0].target.id)
+        $selectedInput = $(this);
+        keyboard.setOptions({
+            inputName: $(e)[0].target.id
         });
-
-        $("input").focus(function(e) {
-            $selectedInput = $(this);
-            keyboard.setOptions({
-                inputName: $(e)[0].target.id
-            });
-        });
-    }
-
-    $("#target_segment").focus();
+    });
 
     $('#pairs tbody td:not(.ex-td)').click(function() {
         let $td = $(this);
@@ -266,7 +276,7 @@ async function loadTable() {
             $(this).find('i').remove();
         }
     });
-    // setDropdowns("a", "b", "Proto-Germanic → Old Norse");
+    // setDropdowns("pʰ", "f", "Ancient Greek,Modern Greek");
 
     $("#segments, #languages").click(async function() {
         let modal = "#tagsInput";
@@ -340,19 +350,7 @@ async function loadTable() {
         let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
 
         $('#transition_source_language_span').html(`<input type="text" id='transition_source_language' />`);
-        $("#transition_source_language").autocomplete({
-            source: Object.values(languages),
-            minLength: 0
-        }).focus(function () {
-            $(this).autocomplete("search");
-        });
         $('#transition_target_language_span').html(`<input type="text" id='transition_target_language' />`);
-        $("#transition_target_language").autocomplete({
-            source: Object.values(languages),
-            minLength: 0
-        }).focus(function () {
-            $(this).autocomplete("search");
-        });
 
         $('#transitions .plus').click(() => {
             submitTransition();
@@ -428,9 +426,9 @@ async function $getJSON(url, data) {
     return result;
 }
 function setDropdowns(sourceSegment, targetSegment, transition) {
-    $('[name=source_segment]').val(sourceSegment);
-    $('[name=target_segment]').val(targetSegment);
-    $('[name=transition]').val(transition);
+    $('#source_segment').val(sourceSegment);
+    $('#target_segment').val(targetSegment);
+    $('#transition').val(transition);
 }
 $(function() {
     loadTable();
@@ -438,6 +436,7 @@ $(function() {
     $("#export").click(function() {
         exportData();
     });
+    makeKeyboard();
     $("#keyboard").click(function() {
         $('.simple-keyboard').slideToggle();
     });
@@ -562,6 +561,10 @@ select:focus, input:focus, textarea:focus {
     width: 50%;
     margin: auto;
     margin-top: 35px;
+}
+input {
+    float: left;
+    width: 100%;
 }
 </style>
 </body>

@@ -30,7 +30,7 @@ if ($_GET) {
         break;
         case "insert":
             switch($table) {
-                case "pair":        echo add_pair($data);                  break;
+                case "pair":        echo add_pair($data, $debug);                  break;
                 case "segment":     echo add_segment($value);              break;
                 case "language":    echo add_language($value);             break;
                 case "transition": 
@@ -299,6 +299,8 @@ function update_pair($data, $debug=false) {
 function add_pair($data, $debug=false) {
     $source_segment = $data["source_segment"];
     $target_segment = $data["target_segment"];
+    $source_language = $data["source_language"];
+    $target_language = $data["target_language"];
     
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
@@ -308,6 +310,15 @@ function add_pair($data, $debug=false) {
     }
 
     $transition_id = $data["transition"];
+    if (!$transition_id) {
+        $source_language_id = get_or_add_language($source_language);
+        $target_language_id = get_or_add_language($target_language);
+        if ($debug) {
+            echo "source_language_id: $source_language ($source_language_id)\n";
+            echo "target_language_id: $target_language ($target_language_id)\n";
+        }
+        $transition_id = get_or_add_transition($source_language_id, $target_language_id);
+    }
     if ($debug) {
         echo "transition_id: $transition_id\n";
     }
