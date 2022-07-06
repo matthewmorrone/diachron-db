@@ -97,7 +97,10 @@ async function submitPair() {
     }
     let result = await $get(url, submit);
     console.log(result);
-    if (result) loadTable();
+    if (result) {
+        await loadTable();
+        $(`#transition`).val(transition);
+    }
 }
 async function submitTransition() {
     let submit = {
@@ -193,6 +196,7 @@ async function loadTable() {
     });
 
     $('#pairs tbody td:not(.ex-td)').click(function() {
+        console.log($(this).attr("class"))
         let $td = $(this);
         let text = $td.text();
         let $input = $(`<input class='edit' value='${text}' />`);
