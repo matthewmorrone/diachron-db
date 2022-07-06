@@ -2,8 +2,8 @@
 Database of Historical Sound Changes
 
 todo:
-+ edit-in-place functionality for transitions modal
-+ consider adding in citation and notes fields
++ implement custom combobox
++ consider adding in environment for pairs, and citation and notes fields for transitions
 + show charts and graphs, for example directed graph of languages
   + https://js.cytoscape.org/
   + https://www.graphdracula.net/

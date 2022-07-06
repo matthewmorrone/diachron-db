@@ -34,6 +34,24 @@ function jsonToSelect(options, id) {
     result += '</select>';
     return result;
 }
+function jsonToDataList(options, id) {
+    let result = `<input type=text name=${id} list=${id} />`;
+    result += `<datalist id='${id}'>`;
+    Object.entries(options).forEach(function(entry) {
+        let [key, val] = entry;
+        result += `<option data-id='${key}'>${val}</option>`;
+    });
+    result += '</datalist>';
+    return result;
+}
+function autocompleteAsSelect(selector, options) {
+    $(selector).autocomplete({
+        source: Object.values(transitions),
+        minLength: 0
+    }).focus(function () {
+        $(this).autocomplete("search");
+    });
+}
 function jsonToTable(data, id) {
     let result = ``;
     result += `<table class="table" id='${id}'>`;
@@ -131,11 +149,14 @@ async function loadTable() {
     </tr>`);
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
-    $('#source_segment_span').html(jsonToSelect(segments, 'source_segment'));
-    $('#target_segment_span').html(jsonToSelect(segments, 'target_segment'));
+    $('#source_segment_span').html(`<input type="text" id='source_segment' />`);
+    $('#target_segment_span').html(`<input type="text" id='target_segment' />`);
+    // autocompleteAsSelect('#source_segment', segments);
+    // autocompleteAsSelect('#target_segment', segments);
 
     let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
-    $('#transition_span').html(jsonToSelect(transitions, 'transition'));
+    $('#transition_span').html(`<input type="text" id='transition' />`);
+    // autocompleteAsSelect('#transition', transitions);
 
     $('#pairs tbody td:not(.ex-td)').click(function() {
         let $td = $(this);
@@ -291,20 +312,24 @@ async function loadTable() {
         $('#transitions thead').append(`<tr>
             <th><span id='transition_source_language_span'></span></th>
             <th><span id='transition_target_language_span'></span></th>
-            <!--
-            <th><span id='citation_span'></span></th>
-            <th><span id='notes_span'></span></th>
-            -->
             <th><button class='plus'></button></th>
         </tr>`);
 
         let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
-        $('#transition_source_language_span').html(jsonToSelect(languages, 'transition_source_language'));
-        $('#transition_target_language_span').html(jsonToSelect(languages, 'transition_target_language'));
-        $('#citation_span').html(`<textarea rows=1></textarea>`);
-        $('#notes_span').html(`<textarea rows=1></textarea>`);
-        $("textarea").each(function() {
-            $(this).css("min-width", $(this).width());
+
+        $('#transition_source_language_span').html(`<input type="text" id='transition_source_language' />`);
+        $("#transition_source_language").autocomplete({
+            source: Object.values(languages),
+            minLength: 0
+        }).focus(function () {
+            $(this).autocomplete("search");
+        });
+        $('#transition_target_language_span').html(`<input type="text" id='transition_target_language' />`);
+        $("#transition_target_language").autocomplete({
+            source: Object.values(languages),
+            minLength: 0
+        }).focus(function () {
+            $(this).autocomplete("search");
         });
 
         $('#transitions .plus').click(() => {
@@ -485,6 +510,25 @@ $(function() {
         height: 100%;
         padding: 0px;
         margin: 0px;
+    }
+    .ui-autocomplete .ui-menu-item:first-child {
+        border-top: 1px solid gray;
+    }
+    .ui-autocomplete .ui-menu-item:last-child {
+        border-bottom: 1px solid gray;
+    }
+    .ui-autocomplete .ui-menu-item {
+        padding: 0px;
+        margin: 0px;
+        border-left: 1px solid gray;
+        border-right: 1px solid gray;
+        background:white;
+    }
+    .ui-autocomplete .ui-state-focus {
+        background:rgb(39, 108, 255);
+    }
+    .ui-autocomplete a {
+        color: black;
     }
     </style>
 </body>
