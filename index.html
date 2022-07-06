@@ -20,19 +20,18 @@
 <script src='https://matthewmorrone.com/prefixfree.js'></script>
 <script src='https://matthewmorrone.com/jquery.js'></script>
 <script src='https://matthewmorrone.com/jquery.ui.js'></script>
-<script src='https://matthewmorrone.com/jquery.helpers.js'></script>
 <script src='utils.js'></script>
 <script>
 let url = `mysql.php`;
 
-function jsonToDataList(options, id) {
-    let result = `<input type=text name=${id} list=${id} />`;
-    result += `<datalist id='${id}'>`;
+function jsonToSelect(options, id) {
+    let result = `<select id='${id}'>`;
+        result += `<option></option>`
     Object.entries(options).forEach(function(entry) {
         let [key, val] = entry;
-        result += `<option data-id='${key}'>${val}</option>`;
+        result += `<option value='${key}'>${val}</option>`;
     });
-    result += '</datalist>';
+    result += '</select>';
     return result;
 }
 function jsonToTable(data, id) {
@@ -49,29 +48,27 @@ function jsonToTable(data, id) {
     result += `</thead>`;
     result += `<tbody>`;
     for(var i = 0; i < data.length; i++) {
-        result += `<tr pair='${data[i]['id']}'>`;
+        result += `<tr ${id.slice(0, id.length-1)}='${data[i]['id']}'>`;
         for(key in data[i]) {
             if(key === 'id') continue;
             result += `<td class=${key}>${data[i][key]}</td>`;
         }
-        result += `<td><button class='ex' data-bs-id="${data[i]['id']}"></button></td>`;
+        result += `<td class='ex-td'><button class='ex' data-bs-id="${data[i]['id']}"></button></td>`;
         result += `</tr>`;
     }
     result += `</tbody>`;
     result += `</table>`;
     return result;
 }
-function submitPair() {
-    let transition = $('#pairs [name=transition]').val();
-
+async function submitPair() {
     let submit = {
         mode: 'insert',
         table: 'pair',
         debug: true,
         data: {
-            source_segment: $('#pairs [name=source_segment]').val(),
-            target_segment: $('#pairs [name=target_segment]').val(),
-            transition: $(`#pairs #transition option:contains("${transition}")`).attr('data-id'),
+            source_segment: $('#source_segment :selected').text(),
+            target_segment: $('#target_segment :selected').text(),
+            transition: $(`#transition`).val(),
         }
     };
     if(!submit.data.source_segment
@@ -80,44 +77,31 @@ function submitPair() {
     ) {
         return;
     }
-    $.get(url, submit, function(data) {
-        loadTable();
-    }).fail(function(e) {
-        showError(e);
-    });
+    let result = await $get(url, submit);
+    if (result) loadTable();
 }
-function submitTransition() {
+async function submitTransition() {
     let submit = {
         mode: 'insert',
         table: 'transition',
         data: {
-            source_language: $('#transitions [name=transition_source_language]').val(),
-            target_language: $('#transitions [name=transition_target_language]').val(),
-            // citation: $('#citation_span textarea').val(),
-            // notes: $('#notes_span textarea').val(),
+            source_language: $('#transition_source_language :selected').text(),
+            target_language: $('#transition_target_language :selected').text(),
         }
     };
-    if(!submit.data.source_language
-    || !submit.data.target_language
-     ) {
-        return;
-    }
-    $.get(url, submit, function(data) {
-        $("#transitions").click()
-    }).fail(function(e) {
-        showError(e);
-    });
+    console.log(submit)
+    if(!submit.data.source_language || !submit.data.target_language) return;
+    
+    let result = await $get(url, submit);
+    if (result) $("#transitions").click()
 }
 function download(filename, text) {
-    var element = document.createElement('a');
+    let element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
     element.setAttribute('download', filename);
-
     element.style.display = 'none';
     document.body.appendChild(element);
-
     element.click();
-
     document.body.removeChild(element);
 }
 async function exportData() {
@@ -137,65 +121,23 @@ function showError(e) {
 }
 async function loadTable() {
 
-    let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'})
+    let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'});
     $(`content`).html(`${jsonToTable(pairs, 'pairs')}`);
     $('#pairs thead').append(`<tr>
         <th><span id='source_segment_span'></span></th>
         <th><span id='target_segment_span'></span></th>
-        <th><span id='source_language_span'></span></th>
-        <th><span id='target_language_span'></span></th>
+        <th><span id='transition_span'></span></th>
         <th><button class='plus'></button></th>
     </tr>`);
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
-    $('#source_segment_span').html(jsonToDataList(segments, 'source_segment'));
-    $('#target_segment_span').html(jsonToDataList(segments, 'target_segment'));
+    $('#source_segment_span').html(jsonToSelect(segments, 'source_segment'));
+    $('#target_segment_span').html(jsonToSelect(segments, 'target_segment'));
 
-    let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
-    $('#source_language_span').html(jsonToDataList(languages, 'source_language'));
-    $('#target_language_span').html(jsonToDataList(languages, 'target_language'));
-    
-    $('#pairs thead tr').each(function() {
-        $(this).find("th").eq($(this).find("th").length-2).after(`<th class='transition'>Transition</th>`)
-    })
-    $('#pairs thead tr:eq(1) .transition').html(`<span id='transition_span'></span>`);
+    let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
+    $('#transition_span').html(jsonToSelect(transitions, 'transition'));
 
-    let transitionData = await $getJSON(url, {mode: 'list', table: 'transitions'});
-    let transitions = {};
-    for(let i = 0; i < transitionData.length; i++) {
-        let transition = transitionData[i];
-        transitions[transition.id] = `${transition.source_language_name} → ${transition.target_language_name}`;
-    }
-    $('#transition_span').html(jsonToDataList(transitions, 'transition'));
-    $("#pairs tr :nth-child(3)").hide()
-    $("#pairs tr :nth-child(4)").hide()
-
-    $('#pairs tbody tr').each(function() {
-        let source = $(this).find(".source_language").text();
-        let target = $(this).find(".target_language").text();
-        $(this).find("td").eq($(this).find("td").length-2).after(`<td class='transition'>${source} → ${target}</td>`)
-    })
-
-    /*
-    $('#pairs input').on('change keyup', function() {
-        $('#pairs tbody tr').show();
-        $('#pairs tbody tr').each(function() {
-            $(this).find("td").slice(0, 4).each(function() {
-                let col = $(this).index();
-                let val = $("#pairs input").eq(col).val();
-                if (val === '') return;
-                let text = $(this).text();
-                if (val && text.includes(val)) $(this).parent().fadeIn();
-                else {
-                    $(this).parent().fadeOut();
-                }
-            });
-        });
-    });
-    */
-
-
-    $('#pairs tbody td:not(.transition)').click(function() {
+    $('#pairs tbody td:not(.ex-td)').click(function() {
         let $td = $(this);
         let text = $td.text();
         let $input = $(`<input class='edit' value='${text}' />`);
@@ -204,7 +146,7 @@ async function loadTable() {
         $input.click(function(e) {
             return false;
         });
-        $input.blur(function() {
+        $input.blur(async function() {
             let newText = $(this).val();
             if (text !== newText) {
                 let $tr = $(this).parents("tr");
@@ -212,17 +154,25 @@ async function loadTable() {
                     mode: "update",
                     table: "pair"
                 }
+                let transition = $tr.find('.transition').text() || newText;
+                if (transition.includes(",")) transition = transition.split(",");
+                else if (transition.includes(" → ")) transition = transition.split(" → ");
+                else return;
+
+                let [source_language, target_language] = transition;
+
                 headers.data = {
                     id: $tr.attr("pair"),
                     source_segment: $tr.find('.source_segment').text() || newText,
                     target_segment: $tr.find('.target_segment').text() || newText,
-                    source_language: $tr.find('.source_language').text() || newText,
-                    target_language: $tr.find('.target_language').text() || newText,
+                    source_language: source_language,
+                    target_language: target_language,
                 };
+
                 console.log(headers)
-                $.get(url, headers, function(data) {
-                    console.log(data)
-                })
+                let result = await $get(url, headers);
+                console.log(result);
+                if (result) loadTable();
             }
             $td.text(newText)
         });
@@ -236,24 +186,15 @@ async function loadTable() {
         if (e.which === 13) $('#pairs .plus').click();
     });
 
-    $('#pairs .ex').click(function(e) {
-        let button = $(e).target();
+    $('#pairs .ex').click(async function(e) {
+        let button = e.target;
         let id = button.getAttribute('data-bs-id');
-        $.get(url, {mode: "remove", table: "pair", id: id}, function(data) {
-            console.log(data);
-            loadTable();
-        }).fail(function(e) {
-            showError(e);
-        });
 
-        /*
-        [source_segment, target_segment, source_language, target_language] = [
-            $(`[pair=${id}]`).find('.source_segment').text(),
-            $(`[pair=${id}]`).find('.target_segment').text(),
-            $(`[pair=${id}]`).find('.source_language').text(),
-            $(`[pair=${id}]`).find('.target_language').text(),
-        ];
-        */
+        let headers = {mode: "remove", table: "pair", id: id};
+        console.log(headers)
+        let result = await $get(url, headers);
+        console.log(result);
+        if (result) loadTable();
     });
 
     $('.sort').click(function() {
@@ -305,19 +246,19 @@ async function loadTable() {
             beforeRemoveTag: function(tags) {
                 return new Promise(async function(resolve, reject) {
                     let headers = {mode: "remove", table: table, id: tags[0].data.id};
-                    let response = await $.get(url, headers);
+                    let response = await $get(url, headers);
                     !response.includes(`Fatal error`) ? resolve() : reject()
                 })
             }
         }});
-        tagify.on('add', function(e) {
-            $.get(url, {mode: "insert", table: table, value: e.detail.data.value}, function(data) {}).fail(function(e) {
-                showError(e);
-            });
-        }).on('edit:updated', function(e) {
-            $.get(url, {mode: "update", table: table, id: e.detail.data.id, value: e.detail.data.value}, function(data) {}).fail(function(e) {
-                showError(e);
-            });
+        tagify.on('add', async function(e) {
+            await $get(url, {mode: "insert", table: table, value: e.detail.data.value});
+        }).on('edit:updated', async function(e) {
+            await $get(url, {mode: "update", table: table, id: e.detail.data.id, value: e.detail.data.value});
+        });
+
+        $modal.on('hide.bs.modal', function(e) {
+            loadTable();
         });
     });
 
@@ -329,18 +270,24 @@ async function loadTable() {
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
         let entries = await $getJSON(url, {mode: "list", table: table});
-        entries = Object.values(entries).map(function(entry) {
+        entries = Object.entries(entries).map(function(entry) {
+            let [id, val] = entry;
+            let [source, target] = val.split(" → ")
             return {
-                id: entry.id,
-                source: entry.source_language_name,
-                target: entry.target_language_name,
-                // citation: entry.citation,
-                // notes: entry.notes
+                id: id,
+                source_language: source,
+                target_language: target
             };
         });
         table = table.slice(0, table.length-1);
 
         $(`${modal} .modal-body`).html(`${jsonToTable(entries, "transitions")}`);
+        $(`${modal} .modal-body tbody`).each(function(elem,index) {
+            let arr = $.makeArray($("tr", this).detach());
+            arr.reverse();
+            $(this).append(arr);
+        });
+
         $('#transitions thead').append(`<tr>
             <th><span id='transition_source_language_span'></span></th>
             <th><span id='transition_target_language_span'></span></th>
@@ -352,8 +299,8 @@ async function loadTable() {
         </tr>`);
 
         let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
-        $('#transition_source_language_span').html(jsonToDataList(languages, 'transition_source_language'));
-        $('#transition_target_language_span').html(jsonToDataList(languages, 'transition_target_language'));
+        $('#transition_source_language_span').html(jsonToSelect(languages, 'transition_source_language'));
+        $('#transition_target_language_span').html(jsonToSelect(languages, 'transition_target_language'));
         $('#citation_span').html(`<textarea rows=1></textarea>`);
         $('#notes_span').html(`<textarea rows=1></textarea>`);
         $("textarea").each(function() {
@@ -364,20 +311,67 @@ async function loadTable() {
             submitTransition();
         });
 
-        $('#transitions .ex').click(function(e) {
-            let button = $(e).target();
-            let id = button.getAttribute('data-bs-id');
-            let headers = {mode: "remove", table: "transition", id: id};
-            $.get(url, headers, function(data) {
-                $("#transitions").click();
-            }).fail(function(e) {
-                showError(e);
+        // this is breaking when the modal is closed and reopened
+        $('#transitions tbody td:not(.ex-td)').click(function() {
+            let $td = $(this);
+            let text = $td.text();
+            let $input = $(`<input class='edit' value='${text}' />`);
+            $td.html($input);
+            $input.select();
+            $input.click(function(e) {
+                return false;
+            });
+            $input.blur(async function() {
+                let newText = $(this).val();
+                if (text !== newText) {
+                    let $tr = $(this).parents("tr");
+                    let headers = {
+                        mode: "update",
+                        table: "transition"
+                    }
+                    headers.data = {
+                        id: $tr.attr("transition"),
+                        source_language: $tr.find('.source_language').text() || newText,
+                        target_language: $tr.find('.target_language').text() || newText,
+                    };
+                    let result = await $get(url, headers);
+                    console.log(result);
+                    if (result) loadTable();
+                }
+                $td.text(newText)
+            });
+            $input.keydown(function(e) {
+                if (e.which === 13) $input.blur();
             });
         });
+
+        $('#transitions .ex').click(async function(e) {
+            let button = e.target;
+            let id = button.getAttribute('data-bs-id');
+            let headers = {mode: "remove", table: "transition", id: id};
+            let result = await $get(url, headers);
+            console.log(result);
+            if (result) $("#transitions").click();
+        });
+
+        $modal.on('hide.bs.modal', function(e) {
+            loadTable();
+        });
+
     });
 }
-async function $getJSON(url, data) {
+async function $get(url, data) {
     let result = -1;
+    try {
+        result = await $.get(url, data);
+    }
+    catch(e) {
+        showError(e);
+    }
+    return result;
+}
+async function $getJSON(url, data) {
+    let result = false;
     try {
         result = await $.getJSON(url, data);
     }
@@ -456,6 +450,9 @@ $(function() {
     .alert {
         margin-bottom: 0px !important;
     }
+    .hidden {
+        display: none;
+    }
     .modal-dialog {
         position: relative;
         display: table;
@@ -470,18 +467,18 @@ $(function() {
         text-overflow: ellipsis;
         max-width: 200px;
     }
-    textarea {
+    select, textarea {
         resize: both;
         min-width: 200px;
         min-height: 26px;
     }
-    input:focus, textarea:focus {
+    select:focus, input:focus, textarea:focus {
         outline: none;
     } 
     .transition input {
         float: left;
     }
-    .edit {
+    .edit, select {
         outline: none;
         border: 0px;
         width: 100%;
