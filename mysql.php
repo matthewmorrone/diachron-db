@@ -1,4 +1,4 @@
-<?
+<?php
 error_reporting(E_ERROR);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 

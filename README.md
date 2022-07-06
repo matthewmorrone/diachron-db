@@ -1,8 +1,22 @@
 # diachron-db
 Database of Historical Sound Changes
 
-todo:
+#### Setup:
++ You'll need a localhost; I use [XAMPP](https://www.apachefriends.org/)
++ Find the htdocs folder (for me it's in <code>C:\xampp\htdocs</code>) and clone this project there
++ Open the XAMPP panel and start Apache and MySQL
++ Go to localhost/phpmyadmin in your browser, and import diachron.sql
++ You'll need a file in the project directory that defines the variables "\$hostname", "\$username", "\$password" and "\$database". 
++ Navigate to <code>localhost/diachron-db</code> in your browser
+
+#### Uses:
++ [Bootstrap 5](https://getbootstrap.com/)
++ [tagify](https://yaireo.github.io/tagify/)
++ [simple-keyboard](https://hodgef.com/simple-keyboard/)
+
+#### To-Do:
 + implement custom combobox
++ move modals to html imports
 + figure out "or" behavior for row filtering
 + consider adding in environment for pairs, and citation and notes fields for transitions
 + show charts and graphs, for example directed graph of languages
