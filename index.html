@@ -183,7 +183,6 @@ async function loadTable() {
     $('#transition_span').html(`<input type="text" id='transition' />`);
 
     $("input").on("focus", function(e) {
-        console.log( $(e)[0].target.id)
         $selectedInput = $(this);
         keyboard.setOptions({
             inputName: $(e)[0].target.id
