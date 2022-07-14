@@ -2,15 +2,15 @@
 error_reporting(E_ERROR);
 mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
 
+include 'credentials.txt';
+
+$mysqli = new mysqli($hostname, $username, $password, $database);
+
 if ($_GET) {
     if ($_GET["debug"]) {
         printr($_GET);
     }
     extract($_GET);
-
-    include 'credentials.txt';
-
-    $mysqli = new mysqli($hostname, $username, $password, $database);
 
     switch($mode) {
         case "connect":
@@ -114,6 +114,7 @@ if ($_GET) {
 }
 function do_query($query) {
     GLOBAL $mysqli;
+    // $query = $mysqli->real_escape_string($query);
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
 }
@@ -140,7 +141,8 @@ function get_pairs() {
     $query = "SELECT pairs.id AS id, 
     source_segment.value AS source_segment, 
     target_segment.value AS target_segment,
-    CONCAT(source_language.value, ' → ', target_language.value) as transition
+    CONCAT(source_language.value, ' → ', target_language.value) as transition, 
+    pairs.notes
     FROM pairs
     INNER JOIN segments AS source_segment
     INNER JOIN segments AS target_segment
@@ -251,6 +253,7 @@ function update_transition($data, $debug=false) {
 }
 function add_transition($source_language_id, $target_language_id, $citation='') {
     $query = "INSERT INTO transitions (source_language_id, target_language_id, citation) VALUES ('$source_language_id', '$target_language_id', '$citation')";
+    // echo $query;
     $result = do_query($query)->insert_id;
     echo "add_transition $source_language_id $target_language_id $citation $result\n";
     return $result;
@@ -273,6 +276,7 @@ function update_pair($data, $debug=false) {
     $target_segment = $data["target_segment"];
     $source_language = $data["source_language"];
     $target_language = $data["target_language"];
+    $notes = $data["notes"];
 
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
@@ -295,7 +299,8 @@ function update_pair($data, $debug=false) {
     $query = "UPDATE pairs 
     SET source_segment_id = '$source_segment_id' 
     , target_segment_id = '$target_segment_id' 
-    , transition_id = '$transition_id' 
+    , transition_id = '$transition_id'
+    , notes = '$notes'
     WHERE id='$id'";
     
     do_query($query);
@@ -306,6 +311,7 @@ function add_pair($data, $debug=false) {
     $target_segment = $data["target_segment"];
     $source_language = $data["source_language"];
     $target_language = $data["target_language"];
+    $notes = $data["notes"];
     
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
@@ -339,8 +345,8 @@ function add_pair($data, $debug=false) {
         echo "pair already exists: ".json_encode($pair);
     }
     else {
-        $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id) 
-        VALUES ('$source_segment_id', '$target_segment_id', '$transition_id');";
+        $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id, notes) 
+        VALUES ('$source_segment_id', '$target_segment_id', '$transition_id', '$notes');";
         if ($debug) echo $query;
         $result = do_query($query)->insert_id;
         echo "add_pair $source_segment_id $target_segment_id $transition_id $result";
@@ -379,8 +385,9 @@ function remove_transition($id) {
 }
 function printr() {
     foreach (func_get_args() as $i) {
-        if (is_array($i) || is_object($i)) {echo "<pre>"; print_r($i); echo "</pre>\n"; }
-        else {print_r($i); echo "\n";}
+        if (is_array($i) || is_object($i)) {/* echo "<pre>";  */var_dump($i);/*  echo "</pre>\n";  */}
+        else {print_r($i);}
+        echo "\n";
     }
 }
 ?>

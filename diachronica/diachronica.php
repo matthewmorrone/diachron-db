@@ -1,4 +1,6 @@
 <?php
+include "../mysql.php";
+
 error_reporting(E_ERROR | E_PARSE);
 echo "<pre>";
 $html = file_get_contents("diachronica.html");
@@ -319,45 +321,41 @@ foreach ($sections as $key=>$section) {
 
     // foreach($result["rules"] as &$rule) { unset($rule["original"]); }
     
-    if ($key < 100) continue;
-    // if ($key > 100) break;
+    // if ($key < 100) continue;
+    // if ($key > 1) break;
     $results[] = $result;
-    /*
-    // r → {r,lː} / V_
-    // does this mean r became l: only sometimes? I feel like there should be environment explanations here
-    */
 }
-/* 
-$chunks = array_chunk($results, 50);
-foreach($chunks as $chunkey=>$chunk) {
-    file_put_contents("$chunkey.html", json_encode($chunk));
-} 
-*/
 
-/* 
-$issues = [];
+
 foreach($results as $result) {
-    $rules = $result["rules"];
-    foreach($rules as $rule) {
-        if (!$rule['source'] or !$rule['target']) {
-            $issues[] = $rule["original"];
+    $source_language_id = get_or_add_language($result["source_language"]);
+    $target_language_id = get_or_add_language($result["target_language"]);
+    $citation = $result["citation"];
+    get_or_add_transition($source_language_id, $target_language_id, $citation); 
+
+    foreach($result["rules"] as $rule) {
+        $data = [
+            "source_segment" => $rule["source"],
+            "target_segment" => $rule["target"],
+            "source_language" => $result["source_language"],
+            "target_language" => $result["target_language"],
+            "notes" => $rule["environment"]." ".$rule["notes"],
+        ];
+        try {
+            echo add_pair($data, true);
+        }
+        catch(Exception $e) {
+            printr($e);
         }
     }
 }
-$issues = array_unique($issues);
-printr(count($issues));
-foreach($issues as $issue) {
-    printr($issue);
-}
-*/
 
-function printr() {
-    foreach (func_get_args() as $i) {
-        if (is_array($i) || is_object($i)) {var_export($i);}
-        else {print_r($i);}
-        echo "\n";
-    }
-}
-// printr($results);
-echo json_encode($results);
+
+
+
+
+
+
+
+// echo json_encode($results);
 ?>

@@ -87,6 +87,7 @@ async function submitPair() {
             target_segment: $('#target_segment').val(),
             source_language: source_language,
             target_language: target_language,
+            notes: $('#notes').val(),
         }
     };
     console.log(submit)
@@ -163,12 +164,14 @@ function inputSelect(id, data) {
 
 async function loadTable() {
 
+    console.log("load table")
     let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'});
     $(`content`).html(`${jsonToTable(pairs, 'pairs')}`);
     $('#pairs thead').append(`<tr>
         <th><span id='source_segment_span'></span></th>
         <th><span id='target_segment_span'></span></th>
         <th><span id='transition_span'></span></th>
+        <th style='vertical-align: top;'><span id='notes_span'><input type="text" id="notes" autocomplete="off"></span></th>
         <th><button class='plus'></button></th>
     </tr>`);
 
@@ -180,7 +183,7 @@ async function loadTable() {
     transitions = transitions.map(transition => {
         return transition[0];
     });
-    inputSelect("transition", segments);
+    inputSelect("transition", transitions);
 
     $("#pairs input").on("focus", function(e) {
         $selectedInput = $(this);
@@ -221,12 +224,13 @@ async function loadTable() {
                     target_segment: $tr.find('.target_segment').text() || newText,
                     source_language: source_language,
                     target_language: target_language,
+                    note: $tr.find('.note').text() || newText,
                 };
 
-                console.log(headers)
+                console.log(headers);
                 let result = await $get(url, headers);
                 console.log(result);
-                if (result) loadTable();
+                // if (result) loadTable();
             }
             $td.text(newText)
         });
@@ -241,14 +245,20 @@ async function loadTable() {
     });
 
     $('#pairs .ex').click(async function(e) {
+        $(this).parents("tr").remove();
         let button = e.target;
         let id = button.getAttribute('data-bs-id');
 
         let headers = {debug: true, mode: "remove", table: "pair", id: id};
         console.log(headers)
+
+        // doing this here since it doesn't have to wait for result
+
+
         let result = await $get(url, headers);
         console.log(result);
-        if (result) loadTable();
+        // if (result) $(this).parents("tr").remove();
+        // if (result) loadTable();
     });
 
     $('.sort').click(function() {
@@ -553,8 +563,14 @@ textarea {
 #transition_span input,
 #transition_span select {
     display: block;
-    width: 300px;
+    width: 100%;
     height: 26px;
+}
+.notes {
+    max-width: 500px;
+}
+.notes_span, #notes {
+    width: 100%;
 }
 </style>
 </body>
