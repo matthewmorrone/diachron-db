@@ -2,7 +2,7 @@ Object.defineProperty(Object.prototype, "define", {
     configurable: true,
     enumerable: false,
     writable: true,
-    value: function (name, value) {
+    value: function(name, value) {
         if (Object[name]) {
             delete Object[name];
         }
@@ -14,6 +14,13 @@ Object.defineProperty(Object.prototype, "define", {
         });
         return this;
     }
+});
+Object.prototype.define("map", function(mapFn) {
+    let object = this;
+    return Object.keys(object).reduce(function(result, key) {
+        result[key] = mapFn(object[key]);
+        return result;
+    }, {});
 });
 String.prototype.define('toTitleCase', function() {
     return this.replace(/\w\S*/g, function (txt) {
