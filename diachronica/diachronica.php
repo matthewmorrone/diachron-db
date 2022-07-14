@@ -328,6 +328,13 @@ foreach ($sections as $key=>$section) {
     */
 }
 /* 
+$chunks = array_chunk($results, 50);
+foreach($chunks as $chunkey=>$chunk) {
+    file_put_contents("$chunkey.html", json_encode($chunk));
+} 
+*/
+
+/* 
 $issues = [];
 foreach($results as $result) {
     $rules = $result["rules"];
@@ -342,7 +349,7 @@ printr(count($issues));
 foreach($issues as $issue) {
     printr($issue);
 }
- */
+*/
 
 function printr() {
     foreach (func_get_args() as $i) {
