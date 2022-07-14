@@ -327,7 +327,7 @@ foreach ($sections as $key=>$section) {
     // does this mean r became l: only sometimes? I feel like there should be environment explanations here
     */
 }
-
+/* 
 $issues = [];
 foreach($results as $result) {
     $rules = $result["rules"];
@@ -342,7 +342,7 @@ printr(count($issues));
 foreach($issues as $issue) {
     printr($issue);
 }
-
+ */
 
 function printr() {
     foreach (func_get_args() as $i) {
