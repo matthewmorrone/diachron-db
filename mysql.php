@@ -22,7 +22,14 @@ if ($_GET) {
         break;
         case "list":
             switch($table) {
-                case "pairs":       echo json_encode(get_pairs());       break;
+                case "pairs":
+                    if ($transition) {
+                        echo json_encode(get_pairs_by_transition($transition));
+                    }
+                    else {
+                        echo json_encode(get_pairs());
+                    }
+                break;
                 case "segments":    echo json_encode(get_segments());    break;
                 case "languages":   echo json_encode(get_languages());   break;
                 case "transitions": echo json_encode(get_transitions()); break;
@@ -33,11 +40,11 @@ if ($_GET) {
                 case "pair":        echo add_pair($data, $debug);                  break;
                 case "segment":     echo add_segment($value);              break;
                 case "language":    echo add_language($value);             break;
-                case "transition": 
+                case "transition":
                     $source_language_id = get_or_add_language($data["source_language"]);
                     $target_language_id = get_or_add_language($data["target_language"]);
                     $citation = $data["citation"];
-                    echo get_or_add_transition($source_language_id, $target_language_id, $citation); 
+                    echo get_or_add_transition($source_language_id, $target_language_id, $citation);
                 break;
             }
         break;
@@ -94,16 +101,16 @@ if ($_GET) {
         case "dump":
             $export = [];
             $export[] = [
-                "type" => "database", 
+                "type" => "database",
                 "name" => $database
             ];
             $tables = get_tables();
             foreach($tables as $table) {
                 $data = get_query("select * from $table");
                 $export[] = [
-                    "type" => "table", 
-                    "database" => $database, 
-                    "table" => $table, 
+                    "type" => "table",
+                    "database" => $database,
+                    "table" => $table,
                     "data" => $data
                 ];
             }
@@ -137,25 +144,67 @@ function get_tables() {
     }
     return $results;
 }
+function clean_tables() {
+    $query = 'DELETE FROM pairs WHERE pairs.id IN (SELECT pairs.id AS id
+FROM pairs
+INNER JOIN segments AS source_segment
+INNER JOIN segments AS target_segment
+ON pairs.source_segment_id = source_segment.id
+AND pairs.target_segment_id = target_segment.id
+WHERE source_segment.value = ""
+OR target_segment.value = "")';
+    do_query($query);
+
+    $query = 'DELETE FROM segments
+WHERE segments.id NOT IN (
+SELECT source_segment_id FROM pairs
+UNION
+SELECT target_segment_id FROM pairs
+)';
+    do_query($query);
+
+    // probably need to do something similar for languages and transitions
+}
+
+function get_pairs_by_transition($transition_id) {
+    $query = "SELECT pairs.id AS id,
+source_segment.value AS source_segment,
+target_segment.value AS target_segment,
+CONCAT(source_language.value, ' → ', target_language.value) as transition,
+pairs.notes
+FROM pairs
+INNER JOIN segments AS source_segment
+INNER JOIN segments AS target_segment
+INNER JOIN transitions
+INNER JOIN languages AS source_language
+INNER JOIN languages AS target_language
+ON pairs.source_segment_id = source_segment.id
+AND pairs.target_segment_id = target_segment.id
+AND pairs.transition_id = transitions.id
+AND transitions.source_language_id = source_language.id
+AND transitions.target_language_id = target_language.id
+WHERE transitions.id = '$transition_id'
+ORDER BY id DESC;";
+    return get_query($query);
+}
 function get_pairs() {
-    $query = "SELECT pairs.id AS id, 
-    source_segment.value AS source_segment, 
-    target_segment.value AS target_segment,
-    CONCAT(source_language.value, ' → ', target_language.value) as transition, 
-    pairs.notes
-    FROM pairs
-    INNER JOIN segments AS source_segment
-    INNER JOIN segments AS target_segment
-    INNER JOIN transitions
-    INNER JOIN languages AS source_language
-    INNER JOIN languages AS target_language
-    ON pairs.source_segment_id = source_segment.id
-    AND pairs.target_segment_id = target_segment.id
-    AND pairs.transition_id = transitions.id
-    AND transitions.source_language_id = source_language.id
-    AND transitions.target_language_id = target_language.id
-    ORDER BY id DESC
-    ;";
+    $query = "SELECT pairs.id AS id,
+source_segment.value AS source_segment,
+target_segment.value AS target_segment,
+CONCAT(source_language.value, ' → ', target_language.value) as transition,
+pairs.notes
+FROM pairs
+INNER JOIN segments AS source_segment
+INNER JOIN segments AS target_segment
+INNER JOIN transitions
+INNER JOIN languages AS source_language
+INNER JOIN languages AS target_language
+ON pairs.source_segment_id = source_segment.id
+AND pairs.target_segment_id = target_segment.id
+AND pairs.transition_id = transitions.id
+AND transitions.source_language_id = source_language.id
+AND transitions.target_language_id = target_language.id
+ORDER BY id DESC;";
     return get_query($query);
 }
 function get_segments() {
@@ -200,16 +249,15 @@ function add_language($value) {
 }
 function get_transitions() {
     // add option for retrieval of citations
-    $query = "SELECT 
-    transitions.id AS id, 
-    CONCAT(source_language.value, ' → ', target_language.value) as transition,
-    citation
-    FROM transitions
-    INNER JOIN languages AS source_language
-    INNER JOIN languages AS target_language
-    ON  transitions.source_language_id = source_language.id
-    AND transitions.target_language_id = target_language.id
-    ";
+    $query = "SELECT
+transitions.id AS id,
+CONCAT(source_language.value, ' → ', target_language.value) as transition,
+citation
+FROM transitions
+INNER JOIN languages AS source_language
+INNER JOIN languages AS target_language
+ON  transitions.source_language_id = source_language.id
+AND transitions.target_language_id = target_language.id";
     foreach(get_query($query) as $row) {
         $results[$row["id"]] = [$row["transition"], $row["citation"]];
     }
@@ -217,16 +265,14 @@ function get_transitions() {
 }
 function check_transition($source, $target) {
     $query = "SELECT * FROM transitions
-    WHERE source_language_id = '$source'
-    AND   target_language_id = '$target'
-    ";
+WHERE source_language_id = '$source'
+AND   target_language_id = '$target'";
     return !empty(get_query($query));
 }
 function get_transition($source, $target) {
     $query = "SELECT * FROM transitions
-    WHERE source_language_id = '$source'
-    AND   target_language_id = '$target'
-    ";
+WHERE source_language_id = '$source'
+AND   target_language_id = '$target'";
     foreach(get_query($query) as $row) {
         $results[] = $row;
     }
@@ -242,12 +288,12 @@ function update_transition($data, $debug=false) {
     $source_language_id = get_or_add_language($source_language);
     $target_language_id = get_or_add_language($target_language);
 
-    $query = "UPDATE transitions 
-    SET source_language_id = '$source_language_id' 
-    , target_language_id = '$target_language_id'
-    , citation = '$citation'
-    WHERE id='$id'";
-    
+    $query = "UPDATE transitions
+SET source_language_id = '$source_language_id'
+, target_language_id = '$target_language_id'
+, citation = '$citation'
+WHERE id='$id'";
+
     do_query($query);
     echo "update_transition $id $source_language_id $target_language_id $citation\n";
 }
@@ -296,13 +342,13 @@ function update_pair($data, $debug=false) {
         echo "transition_id: $transition_id\n";
     }
 
-    $query = "UPDATE pairs 
-    SET source_segment_id = '$source_segment_id' 
-    , target_segment_id = '$target_segment_id' 
+    $query = "UPDATE pairs
+    SET source_segment_id = '$source_segment_id'
+    , target_segment_id = '$target_segment_id'
     , transition_id = '$transition_id'
     , notes = '$notes'
     WHERE id='$id'";
-    
+
     do_query($query);
     echo "update_pair $id $source_segment_id $target_segment_id $transition_id";
 }
@@ -312,7 +358,7 @@ function add_pair($data, $debug=false) {
     $source_language = $data["source_language"];
     $target_language = $data["target_language"];
     $notes = $data["notes"];
-    
+
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
     if ($debug) {
@@ -335,17 +381,16 @@ function add_pair($data, $debug=false) {
     }
 
     $query = "SELECT * from pairs
-    WHERE source_segment_id = '$source_segment_id'
-    AND target_segment_id = '$target_segment_id'
-    AND transition_id = '$transition_id'
-    ";
+WHERE source_segment_id = '$source_segment_id'
+AND target_segment_id = '$target_segment_id'
+AND transition_id = '$transition_id'";
     if ($debug) echo $query;
     $pair = get_query($query);
     if (!empty($pair)) {
         echo "pair already exists: ".json_encode($pair);
     }
     else {
-        $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id, notes) 
+        $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id, notes)
         VALUES ('$source_segment_id', '$target_segment_id', '$transition_id', '$notes');";
         if ($debug) echo $query;
         $result = do_query($query)->insert_id;

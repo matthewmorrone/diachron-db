@@ -8,11 +8,19 @@ function makeKeyboard() {
             preventMouseUpDefault: false,
             layout: {
                 'default': [
-                    'β ç ɗ ɖ ð ɟ ɢ ɦ ħ ʜ ɭ ɬ ɮ ʟ ʎ ɱ ɰ ŋ ɳ ɲ ɴ',
-                    'ɸ ɹ ɻ ɾ ɽ ʀ ʁ ʂ ʃ θ ʈ ʋ ɣ ʍ χ ʐ ʒ ʔ ʕ ʡ ʢ',
-                    'ɑ ɐ ɒ æ ə ɘ ɵ ɚ ɛ ɜ ɝ ɞ ɨ ɪ ɔ ø œ ɶ ɥ ʌ ʊ ʉ ɯ ɤ ʏ',
-                    '∅ ˈ ˌ ː ˑ ʼ ʴ ʰ ʱ ʲ ʷ ˠ ˤ',
-                    '˞ ̃ ̆ ̈ ̽ ̚ ̋ ́ ̄ ̀ ̏ ̌ ̂ ̊ ̥ ̤ ̪ ̬ ̰ ̺ ̼ ̻ ̹ ̜ ̟ ̠ ̝ ̩ ̞ ̯ ̘ ̙'
+                    'p b t d ʈ ɖ c ɟ k ɡ q ɢ ʡ ʔ',
+                    'm ɱ n ɳ ɲ ŋ ɴ ʙ r ʀ ⱱ ɾ ɽ',
+                    'ɸ β f v θ ð s z ʃ ʒ ʂ ʐ ç ʝ x ɣ χ ʁ ħ ʕ ʜ ʢ h ɦ',
+                    'ɬ ɮ ʋ ɹ ɻ j ɰ l ɭ ʎ ʟ ɺ',
+                    'i y ɨ ʉ ɯ u ɪ ʏ ʊ e ø ɘ ɵ ɤ o ə ɛ œ ɜ ɞ ʌ ɔ æ ɐ a ɶ ɑ ɒ ɚ ',
+                    'ʍ w ɥ ɫ ɓ ɗ ᶑ ʄ ɠ ʛ ʘ ǀ ǃ ǂ ǁ ',
+                    '∅ ˈ ˌ ː ˑ ʼ ʴ ʰ ʱ ʲ ʷ ˠ ˤ ˞ ̃',
+                    ' ̴ ̆ ̈ ̽ ̚ ̋ ́ ̄ ̀ ̏ ̌ ̂ ̊ ̥ ̤ ̪ ̬ ̰ ̺ ̼ ̻ ̹ ̜ ̟ ̠ ̝ ̩ ̞ ̯ ̘ ̙ ',
+                    // 'β ç ɗ ɖ ð ɟ ɢ ɦ ħ ʜ ɭ ɬ ɮ ʟ ʎ ɱ ɰ ŋ ɳ ɲ ɴ',
+                    // 'ɸ ɹ ɻ ɾ ɽ ʀ ʁ ʂ ʃ θ ʈ ʋ ɣ ʍ χ ʐ ʒ ʔ ʕ ʡ ʢ',
+                    // 'ɑ ɐ ɒ æ ə ɘ ɵ ɚ ɛ ɜ ɝ ɞ ɨ ɪ ɔ ø œ ɶ ɥ ʌ ʊ ʉ ɯ ɤ ʏ',
+                    // '∅ ˈ ˌ ː ˑ ʼ ʴ ʰ ʱ ʲ ʷ ˠ ˤ',
+                    // '˞ ̃ ̆ ̈ ̽ ̚ ̋ ́ ̄ ̀ ̏ ̌ ̂ ̊ ̥ ̤ ̪ ̬ ̰ ̺ ̼ ̻ ̹ ̜ ̟ ̠ ̝ ̩ ̞ ̯ ̘ ̙'
                 ]
             },
             buttonAttributes: [
@@ -79,8 +87,6 @@ function makeKeyboard() {
                 { attribute: "title", buttons: "ʎ", value: "Palatal Lateral Approximant", },
                 { attribute: "title", buttons: "ʟ", value: "Velar Lateral Approximant", },
                 { attribute: "title", buttons: "ɺ", value: "Alveolar Lateral Flap", },
-                { attribute: "title", buttons: "β", value: "Voiced Bilabial Fricative", },
-                { attribute: "title", buttons: "ç", value: "Voiced Palatal Fricative", },
                 { attribute: "title", buttons: "i", value: "Close Front Unrounded Vowel", }, 
                 { attribute: "title", buttons: "y", value: "Close Front Rounded Vowel", }, 
                 { attribute: "title", buttons: "ɨ", value: "Close Central Unrounded Vowel", }, 

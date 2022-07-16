@@ -45,6 +45,17 @@ function jsonToDataList(options, id) {
     result += '</datalist>';
     return result;
 }
+function jsonToTableRow(data, id) {
+    let result = ``;
+    result += `<tr ${id}='${data['id']}'>`;
+    for(key in data) {
+        if(key === 'id') continue;
+        result += `<td class=${key}>${data[key]}</td>`;
+    }
+    result += `<td class='ex-td'><button class='ex' data-bs-id="${data['id']}"></button></td>`;
+    result += `</tr>`;
+    return result;
+}
 function jsonToTable(data, id) {
     let result = ``;
     result += `<table class="table" id='${id}'>`;
@@ -149,14 +160,14 @@ function showError(e) {
 }
 
 function inputSelect(id, data) {
-    $(`#${id}_span`).empty();
-    let $input = $(`<input type="text" id='${id}' autocomplete="off" />`);
+    $(`#${id}_span select`).remove();
+    let $input = $(`#${id}`);
     let $select = $(jsonToSelect(data, id));
-    $(`#${id}_span`).append($input);
     $(`#${id}_span`).append($select);
 
     $select.change(function() {
-        $input.val($select.find(":selected").text())
+        $input.val($select.find(":selected").text());
+        $input.attr("select", $(this).val());
         $select.val("");
         $input.focus();
     })
@@ -166,14 +177,7 @@ async function loadTable() {
 
     console.log("load table")
     let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'});
-    $(`content`).html(`${jsonToTable(pairs, 'pairs')}`);
-    $('#pairs thead').append(`<tr>
-        <th><span id='source_segment_span'></span></th>
-        <th><span id='target_segment_span'></span></th>
-        <th><span id='transition_span'></span></th>
-        <th style='vertical-align: top;'><span id='notes_span'><input type="text" id="notes" autocomplete="off"></span></th>
-        <th><button class='plus'></button></th>
-    </tr>`);
+    // $(`content`).html(`${jsonToTable(pairs, 'pairs')}`);
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
     inputSelect("source_segment", segments);
@@ -185,80 +189,91 @@ async function loadTable() {
     });
     inputSelect("transition", transitions);
 
+        
+    $(document).on("change", "#transition", async function(e) {
+        let headers = {mode: "list", table: "pairs", "transition": $(this).prev("input").attr("select")};
+        console.log(headers)
+        let rows = await $getJSON(url, headers);
+        let $table = $("#pairs tbody");
+        $table.empty();
+        rows.forEach(function(row) {
+            $table.append(jsonToTableRow(row, "pair"))
+        });
+        
+        $('#pairs tbody td:not(.ex-td)').off("click")
+        $('#pairs tbody td:not(.ex-td)').click(function() {
+            let $td = $(this);
+            let text = $td.text();
+            let $input = $(`<input class='edit' value='${text}' />`);
+            $td.html($input);
+            $input.select();
+            $input.click(function(e) {
+                return false;
+            });
+            $input.blur(async function() {
+                let newText = $(this).val();
+                if (text !== newText) {
+                    let $tr = $(this).parents("tr");
+                    let headers = {
+                        mode: "update",
+                        table: "pair"
+                    }
+                    let transition = $tr.find('.transition').text() || newText;
+                    if (transition.includes(",")) transition = transition.split(",");
+                    else if (transition.includes(" → ")) transition = transition.split(" → ");
+                    else return;
+
+                    let [source_language, target_language] = transition;
+
+                    headers.data = {
+                        id: $tr.attr("pair"),
+                        source_segment: $tr.find('.source_segment').text() || newText,
+                        target_segment: $tr.find('.target_segment').text() || newText,
+                        source_language: source_language,
+                        target_language: target_language,
+                        note: $tr.find('.note').text() || newText,
+                    };
+
+                    console.log(headers);
+                    let result = await $get(url, headers);
+                    console.log(result);
+                    // if (result) loadTable();
+                }
+                $td.text(newText)
+            });
+            $input.keydown(function(e) {
+                if (e.which === 13) $input.blur();
+            });
+        });
+
+        $('#pairs .plus').click(() => submitPair());
+        $('#pairs thead input').keyup((e) => {
+            if (e.which === 13) $('#pairs .plus').click();
+        });
+
+        $('#pairs .ex').click(async function(e) {
+
+            // doing this here since it doesn't have to wait for result
+            $(this).parents("tr").remove();
+
+            let button = e.target;
+            let id = button.getAttribute('data-bs-id');
+
+            let headers = {debug: true, mode: "remove", table: "pair", id: id};
+            console.log(headers)
+
+            let result = await $get(url, headers);
+            console.log(result);
+            // if (result) $(this).parents("tr").remove();
+            // if (result) loadTable();
+        });
+    });
+
     $("#pairs input").on("focus", function(e) {
         $selectedInput = $(this);
         keyboard.setOptions({
             inputName: $(e)[0].target.id
         });
-    });
-
-    $('#pairs tbody td:not(.ex-td)').off("click")
-    $('#pairs tbody td:not(.ex-td)').click(function() {
-        console.log($(this).attr("class"))
-        let $td = $(this);
-        let text = $td.text();
-        let $input = $(`<input class='edit' value='${text}' />`);
-        $td.html($input);
-        $input.select();
-        $input.click(function(e) {
-            return false;
-        });
-        $input.blur(async function() {
-            let newText = $(this).val();
-            if (text !== newText) {
-                let $tr = $(this).parents("tr");
-                let headers = {
-                    mode: "update",
-                    table: "pair"
-                }
-                let transition = $tr.find('.transition').text() || newText;
-                if (transition.includes(",")) transition = transition.split(",");
-                else if (transition.includes(" → ")) transition = transition.split(" → ");
-                else return;
-
-                let [source_language, target_language] = transition;
-
-                headers.data = {
-                    id: $tr.attr("pair"),
-                    source_segment: $tr.find('.source_segment').text() || newText,
-                    target_segment: $tr.find('.target_segment').text() || newText,
-                    source_language: source_language,
-                    target_language: target_language,
-                    note: $tr.find('.note').text() || newText,
-                };
-
-                console.log(headers);
-                let result = await $get(url, headers);
-                console.log(result);
-                // if (result) loadTable();
-            }
-            $td.text(newText)
-        });
-        $input.keydown(function(e) {
-            if (e.which === 13) $input.blur();
-        });
-    });
-
-    $('#pairs .plus').click(() => submitPair());
-    $('#pairs thead input').keyup((e) => {
-        if (e.which === 13) $('#pairs .plus').click();
-    });
-
-    $('#pairs .ex').click(async function(e) {
-        $(this).parents("tr").remove();
-        let button = e.target;
-        let id = button.getAttribute('data-bs-id');
-
-        let headers = {debug: true, mode: "remove", table: "pair", id: id};
-        console.log(headers)
-
-        // doing this here since it doesn't have to wait for result
-
-
-        let result = await $get(url, headers);
-        console.log(result);
-        // if (result) $(this).parents("tr").remove();
-        // if (result) loadTable();
     });
 
     $('.sort').click(function() {
@@ -450,9 +465,6 @@ $(function() {
 
     loadTable();
 
-    $("#export").click(function() {
-        exportData();
-    });
     makeKeyboard();
     $("#keyboard").click(function() {
         $('.simple-keyboard').slideToggle();
@@ -462,6 +474,10 @@ $(function() {
         let url = $(this).attr("href")
         let result = await $get(url)
         $(this).replaceWith(result);
+    });
+
+    $("#export").click(function() {
+        exportData();
     });
 });
 </script>
@@ -478,6 +494,27 @@ $(function() {
         <div class="simple-keyboard"></div>
     </header>
     <content>
+        <table class="table" id='pairs'>
+            <thead>
+                <tr>
+                    <th class="sort">Source Segment</th>
+                    <th class="sort">Target Segment</th>
+                    <th class="sort">Transition</th>
+                    <th class="sort">Notes</th>
+                    <th></th>
+                </tr>
+                <tr>
+                    <th><span id="source_segment_span"><input type="text" id="source_segment" autocomplete="off"></span></th>
+                    <th><span id="target_segment_span"><input type="text" id="target_segment" autocomplete="off"></span></th>
+                    <th><span id="transition_span"><input type="text" id="transition" autocomplete="off"></span></th>
+                    <th style="vertical-align: top;"><span id="notes_span"><input type="text" id="notes" autocomplete="off"></span></th>
+                    <th><button class="plus"></button></th>
+                </tr>
+            </thead>
+            <tbody>
+
+            </tbody>
+        </table>
     </content>
     <footer>
     </footer>
