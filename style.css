@@ -1,58 +1,60 @@
-@font-face {
-    font-family: "Raleway";
-    font-style: normal;
-    font-weight: 400;
-    src: local("Raleway"), url(https://themes.googleusercontent.com/static/fonts/raleway/v6/cIFypx4yrWPDz3zOxk7hIQLUuEpTyoUstqEm5AMlJo4.woff) format("woff");
-}
-@font-face {
-    font-family: "Open Sans";
-    font-style: normal;
-    font-weight: 400;
-    src: local("Open Sans"), local("OpenSans"), url(https://themes.googleusercontent.com/static/fonts/opensans/v6/cJZKeOuBrn4kERxqtaUH3bO3LdcAZYWl9Si6vvxL-qU.woff) format("woff");
-}
-header, nav, #content, aside, footer {
-    margin: 10px;
-    padding: 10px;
+*::-webkit-scrollbar { 
+    display: none;
 }
 header, content, footer {
-    min-width: 800px;
     text-align: center;
-}
-table {
-    float: left;
-    width: auto !important;
 }
 .table > :not(:first-child), tbody {
     border-top: 0px solid currentColor !important;
 }
-content div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
 th {
     text-align: center;
+}
+select:focus, input:focus, textarea:focus {
+    outline: none;
 }
 .ex, .plus {
     width: 1.5em;
     height: 1.5em;
     color: #000;
+    opacity: .5;
     border: 0;
     border-radius: 0.5rem;
-    opacity: .5;
     background-repeat: no-repeat;
 }
 .ex {
-    background: url('ex.svg') no-repeat;
+    background: url('img/ex.svg') no-repeat;
 }
 .plus {
-    background: url('plus.svg') no-repeat;
-}
-.inverted {
-    filter: 100%;
-    background-color: black;
+    background: url('img/plus.svg') no-repeat;
 }
 tag::before {
     content: '\A'; 
     white-space: pre;
+}
+.alert {
+    margin-bottom: 0px !important;
+}
+.modal-dialog {
+    position: relative;
+    display: table;
+    overflow-y: auto;
+    overflow-x: auto;
+    width: auto;
+    min-width: 300px;
+}
+.modal-dialog td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    max-width: 200px;
+}
+.simple-keyboard {
+    display: none;
+    width: 50%;
+    margin: auto;
+    margin-top: 35px;
+}
+textarea {
+    resize: both;
 }
