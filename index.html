@@ -513,7 +513,6 @@ $(function() {
     $("[rel='import']").each(async function() {
         let url = $(this).attr("href");
         let result = await $get(url);
-        console.log(url, result)
         $(this).replaceWith(result);
     });
 
