@@ -200,13 +200,13 @@ $data = get_data(get_structure(get_descendants($language)));
         <option>grid</option>
         <option>circle</option>
         <option>concentric</option>
-        <option selected>avsdf</option>
+        <option>avsdf</option>
     </optgroup>
     <optgroup label="Hierarchical">
         <option>dagre</option>
         <option>breadthfirst</option>
         <!-- <option>elk</option> -->
-        <option>klay</option>
+        <option selected>klay</option>
     </optgroup>
     <optgroup label="Force-directed">
         <option>fcose</option>
@@ -231,8 +231,8 @@ let data = <?php echo json_encode($data); ?>;
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-avsdf/cytoscape-avsdf.js"></script>
 <script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
 <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/elkjs@0.7.0/lib/elk.bundled.js"></script>
-<script src="https://cytoscape.org/cytoscape.js-elk/cytoscape-elk.js"></script>
+<!-- <script src="https://cdn.jsdelivr.net/npm/elkjs@0.7.0/lib/elk.bundled.js"></script> -->
+<!-- <script src="https://cytoscape.org/cytoscape.js-elk/cytoscape-elk.js"></script> -->
 <script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
 <script src="https://cytoscape.org/cytoscape.js-klay/cytoscape-klay.js"></script>
 <script src="https://unpkg.com/layout-base/layout-base.js"></script>
@@ -260,7 +260,7 @@ $(function() {
         elements: data,
         selectionType: 'single',
         layout: {
-            name: $("#layout").val()
+            name: "random"
         },
         style: [{
             selector: 'node',
@@ -289,7 +289,8 @@ $(function() {
             padding: 20,
         });
         layout.run();
-    })
+    }).change($("#layout").val()).trigger("change");
+
 });
 </script>
 </body>
