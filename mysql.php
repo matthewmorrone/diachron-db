@@ -438,9 +438,9 @@ function remove_transition($id) {
 }
 function printr() {
     foreach (func_get_args() as $i) {
-        if (is_array($i) || is_object($i)) {echo "<pre>";  print_r($i); echo "</pre>\n";}
+        if (is_array($i) || is_object($i)) {echo "<pre>";  print_r($i); echo "</pre>";}
         else {print_r($i);}
-        echo "\n";
+        echo "\n<br>";
     }
 }
 ?>

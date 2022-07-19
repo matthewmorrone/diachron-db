@@ -420,8 +420,8 @@ function database_cleanup() {
 }
 
 
-database($results);
-database_cleanup();
+// database($results);
+// database_cleanup();
 
 set_time_limit(120);
 ?>
