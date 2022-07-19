@@ -31,14 +31,12 @@ $database = (isset($database) ? $database : "diachron");
 + expansion of abbreviations: 
   + will need to have each language's inventory (available in html but currently ignored)
   + and a method of retrieving members based on features, which will require a lookup table
-+ add labels to keyboard keys
-+ show charts and graphs, for example directed graph of languages
-  + https://js.cytoscape.org/
-  + https://www.graphdracula.net/
-  + https://www.sigmajs.org/
-  + https://visjs.org/#gallery
-  + https://bl.ocks.org/cjrd/6863459
++ need inventory enumeration:
+  + add data to database which contains every phone that belongs to a language
+  + add table that maps abbreviations to all phones they would represent
+  + given a language and a category, return that set of phones within that language
+  + given a language, start at its earliest ancestor with a phonological inventory and apply sound changes to get hypothetical inventory
 + if this is ever made more widely available, will need:
-  + sql injection prevent / input sanitization
+  + sql injection prevention / input sanitization
   + regular backups of data, data approval
   + view and edit modes
