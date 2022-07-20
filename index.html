@@ -178,18 +178,6 @@ async function exportData() {
     let data = await $getJSON(url, {mode: 'dump'});
     download("diachron.json", JSON.stringify(data));
 }
-function showError(e) {
-    console.error(e);
-
-    let modal = "#error";
-    let $modal = $(modal);
-    $modal.modal('show');
-
-    $(`${modal} .modal-title`).text(`Error Status ${e.status}`);
-    $(`${modal} .modal-body`).html(e.responseText);
-    $(`${modal} .modal-body`).find("br").remove()
-}
-
 function inputSelect(id, data) {
     $(`#${id}_span select`).remove();
     let $input = $(`#${id}`);
@@ -479,6 +467,22 @@ async function loadTable() {
 
     });
 }
+function setDropdowns(sourceSegment, targetSegment, transition) {
+    $('#source_segment').val(sourceSegment);
+    $('#target_segment').val(targetSegment);
+    $('#transition').val(transition);
+}
+function showError(e) {
+    console.error(e);
+
+    let modal = "#error";
+    let $modal = $(modal);
+    $modal.modal('show');
+
+    $(`${modal} .modal-title`).text(`Error Status ${e.status}`);
+    $(`${modal} .modal-body`).html(e.responseText);
+    $(`${modal} .modal-body`).find("br").remove();
+}
 async function $get(url, data) {
     let result = false;
     try {
@@ -499,21 +503,14 @@ async function $getJSON(url, data) {
     }
     return result;
 }
-function setDropdowns(sourceSegment, targetSegment, transition) {
-    $('#source_segment').val(sourceSegment);
-    $('#target_segment').val(targetSegment);
-    $('#transition').val(transition);
-}
 $(function() {
     $.ajaxSetup({cache: false});
 
     loadTable();
-
     
     $("[rel='import']").each(async function() {
         let url = $(this).attr("href");
         let result = await $get(url);
-        console.log(url, result)
         $(this).replaceWith(result);
     });
 
