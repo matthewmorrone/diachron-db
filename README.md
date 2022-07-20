@@ -24,20 +24,18 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 
 #### To-Do:
-+ separate out search and submission areas
++ separate out search and submission areas, if not, implement custom combobox
 + when modifying something and that something already exists, merge rather than reject
-+ implement custom combobox
 + figure out "or" behavior for row filtering
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
-+ consider notes field for pairs and transitions
-+ expansion of abbreviations: 
++ expansion of abbreviations and inventory enumeration:
   + will need to have each language's inventory (available in html but currently ignored)
-  + and a method of retrieving members based on features, which will require a lookup table
-+ need inventory enumeration:
   + add data to database which contains every phone that belongs to a language
-  + add table that maps abbreviations to all phones they would represent
+  + and a method of retrieving members based on features, which will require a lookup table
+  + lookup table maps abbreviations to all phones they would represent
   + given a language and a category, return that set of phones within that language
-  + given a language, start at its earliest ancestor with a phonological inventory and apply sound changes to get hypothetical inventory
+  + given a language, start at its earliest inventoried ancestor apply enumerate sound changes:
+  + differences from actual inventory will elucidate missing data
 + if this is ever made more widely available, will need:
   + sql injection prevention / input sanitization
   + regular backups of data, data approval

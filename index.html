@@ -11,6 +11,7 @@
 @import 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css';
 @import 'https://unpkg.com/@yaireo/tagify/dist/tagify.css';
 @import 'https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css';
+@import 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css';
 @import 'style.css';
 #pairs {
     width: 70%;
@@ -48,8 +49,8 @@
 <script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
 <script src='https://matthewmorrone.com/icon.js'></script>
 <script src='https://matthewmorrone.com/jquery.js'></script>
+<script src='https://matthewmorrone.com/jquery.ui.js'></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.modern.js"></script>
-
 <script src='utils.js'></script>
 <script src='keyboard.js'></script>
 <script>
@@ -63,6 +64,14 @@ function jsonToSelect(options, id) {
         result += `<option value='${key}'>${val}</option>`;
     });
     result += '</select>';
+    return result;
+}
+function jsonToOptions(options, id) {
+    let result = `<option></option>`
+    Object.entries(options).forEach(function(entry) {
+        let [key, val] = entry;
+        result += `<option value='${key}'>${val}</option>`;
+    });
     return result;
 }
 function jsonToDataList(options, id) {
@@ -113,7 +122,7 @@ function jsonToTable(data, id) {
     return result;
 }
 async function submitPair() {
-    let transition = $(`#transition`).val();
+    let transition = $(`.submit .transition input`).val();
     if (transition.includes(",")) transition = transition.split(",");
     else if (transition.includes(" → ")) transition = transition.split(" → ");
     else return;
@@ -124,12 +133,12 @@ async function submitPair() {
         table: 'pair',
         debug: true,
         data: {
-            source_segment: $('#source_segment').val(),
-            target_segment: $('#target_segment').val(),
+            source_segment: $('.submit .source_segment input').val(),
+            target_segment: $('.submit .target_segment input').val(),
             source_language: source_language,
             target_language: target_language,
-            environment: $('#environment').val(),
-            notes: $('#notes').val(),
+            environment: $('.submit .environment input').val(),
+            notes: $('.submit .notes input').val(),
         }
     };
     console.log(submit)
@@ -141,10 +150,9 @@ async function submitPair() {
         return;
     }
     let result = await $get(url, submit);
-    console.log(result);
     if (result) {
         await loadTable();
-        $(`#transition`).val(transition);
+        $(`.submit .transition input`).val(transition);
     }
 }
 async function submitTransition() {
@@ -153,16 +161,13 @@ async function submitTransition() {
         table: 'transition',
         debug: true,
         data: {
-            source_language: $('#transition_source_language').val(),
-            target_language: $('#transition_target_language').val(),
-            citation: $('#transition_citation').val(),
+            source_language: $('#transition .source_language input').val(),
+            target_language: $('#transition .target_language input').val(),
+            citation: $('#transition .citation input').val(),
         }
     };
-    console.log(submit)
     if(!submit.data.source_language || !submit.data.target_language) return;
-
     let result = await $get(url, submit);
-    console.log(result);
     if (result) $("#transitions").click()
 }
 function download(filename, text) {
@@ -178,38 +183,23 @@ async function exportData() {
     let data = await $getJSON(url, {mode: 'dump'});
     download("diachron.json", JSON.stringify(data));
 }
-function inputSelect(id, data) {
-    $(`#${id}_span select`).remove();
-    let $input = $(`#${id}`);
-    let $select = $(jsonToSelect(data, `${id}Select`));
-    $(`#${id}_span`).append($select);
 
-
-
-    $select.change(function() {
-        $input.val($select.find(":selected").text());
-        // $input.attr("select", $(this).val());
-        // $select.val("");
-        // $input.focus();
-    });
-}
-
-function sortDropdown(id) {
-    let $options = $(`#${id} option`);
+function sortDropdown($sel) {
+    let $options = $sel.find(`option:not(:first-child)`);
     $options.detach().sort(function(a, b) {
         let at = $(a).text();
         let bt = $(b).text();
         return (at > bt) ? 1: ((at < bt) ? -1 : 0);
     });
-    $options.appendTo(`#${id}`);
+    $options.appendTo($sel);
 }
 
 function randomTransition() {
-    if (!$("transition").val()) {
-        let $options = $('#transitionSelect').find('option');
+    if (!$(".search .transition select").val()) {
+        let $options = $('.search transition select').find('option');
         let $random = $options.eq(~~(Math.random() * $options.length));
         $random.prop('selected', true);
-        $('#transitionSelect').trigger("change");
+        $('.search transition select').trigger("change");
     }
 }
 
@@ -248,26 +238,31 @@ function sortTables() {
 async function loadTable() {
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
-    inputSelect("source_segment", segments);
-    inputSelect("target_segment", segments);
+
+    $(".search .source_segment select").html(jsonToOptions(segments));
+    $(".search .target_segment select").html(jsonToOptions(segments));
 
     let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
     transitions = transitions.map(transition => {
         return transition[0];
     });
-    inputSelect("transition", transitions);
-    sortDropdown("transitionSelect");
+    $(".search .transition select").html(jsonToOptions(transitions));
 
-    $("#transitionSelect").on("change", async function(e) {
+    sortDropdown($(".search .source_segment select"));
+    sortDropdown($(".search .target_segment select"));
+    sortDropdown($(".search .transition select"));
+
+    $(".search .transition select").on("change", async function(e) {
         e.preventDefault();
-        let transition = $("#transitionSelect").val();
+        let transition = $(".search .transition select").val();
         localStorage.setItem("transition", transition);
 
         let headers = {mode: "list", table: "pairs", transition: transition};
         let rows = await $getJSON(url, headers);
         let $table = $("#pairs tbody");
         $table.empty();
-        rows.forEach(function(row) {
+
+        rows && rows.forEach(function(row) {
             let $tableRow = $(jsonToTableRow(row, "pair"));
             $tableRow.find(".transition").attr("colspan", 2);
             $table.append($tableRow);
@@ -345,7 +340,7 @@ async function loadTable() {
     });
 
     if (localStorage.getItem("transition")) {
-        $("#transitionSelect").val(localStorage.getItem("transition")).trigger("change")
+        $(".search .transition select").val(localStorage.getItem("transition")).trigger("change")
     }
 
     $("#pairs input").on("focus", function(e) {
@@ -356,7 +351,6 @@ async function loadTable() {
     });
 
     sortTables();
-    // setDropdowns("pʰ", "f", "Ancient Greek,Modern Greek");
 
     $("#segmentsModal, #languagesModal").click(async function() {
         let modal = "#tagsInput";
@@ -415,7 +409,6 @@ async function loadTable() {
             };
         });
         table = table.slice(0, table.length-1);
-
 
         let $transitionsTable = $(jsonToTable(entries, "transitions"));
         $transitionsTable.find("thead").append(`<tr>
@@ -505,9 +498,9 @@ async function loadTable() {
     });
 }
 function setDropdowns(sourceSegment, targetSegment, transition) {
-    $('#source_segment').val(sourceSegment);
-    $('#target_segment').val(targetSegment);
-    $('#transition').val(transition);
+    $('.search .source_segment select').val(sourceSegment);
+    $('.search .target_segment select').val(targetSegment);
+    $('.search .transition select').val(transition);
 }
 function showError(e) {
     console.error(e);
@@ -564,6 +557,15 @@ $(function() {
         $(`${modal} .modal-title`).text(table);
     });
 
+    $("#graph").click(function() {
+        let modal = "#graphModal";
+        let $modal = $(modal);
+        $modal.modal('show');
+        let table = $(this).text();
+        $(`${modal} .modal-title`).text(table);
+        $modal.draggable().resizable();
+    });
+
     $("#random").click(function() {
         randomTransition();
     });
@@ -583,6 +585,7 @@ $(function() {
         <button class="btn btn-primary" id="segmentsModal">Segments</button>
         <button class="btn btn-primary" id="languagesModal">Languages</button>
         <button class="btn btn-primary" id="transitionsModal">Transitions</button>
+        <button class="btn btn-primary" id="graph">Graph</button>
         <button class="btn btn-primary" id="about">About</button>
         <button class="btn btn-secondary" id="export">Export Data</button>
         <div class="simple-keyboard"></div>
@@ -590,21 +593,29 @@ $(function() {
     <content>
         <table class="table" id='pairs'>
             <thead>
-                <tr>
-                    <th class="source_segment sort" scope="col">Source Segment</th>
-                    <th class="target_segment sort" scope="col">Target Segment</th>
-                    <th class="transition sort" colspan='2' scope="col">Transition</th>
-                    <th class="environment sort" scope="col">Environment</th>
-                    <th class="notes sort" scope="col">Notes</th>
-                    <th scope="col"></th>
+                <tr class='title'>
+                    <th class="source_segment sort">Source Segment</th>
+                    <th class="target_segment sort">Target Segment</th>
+                    <th class="transition sort">Transition</th>
+                    <th class="environment sort">Environment</th>
+                    <th class="notes sort">Notes</th>
+                    <th></th>
                 </tr>
-                <tr>
-                    <th class='source_segment'><span id="source_segment_span"><input type="text" id="source_segment" autocomplete="off"></span></th>
-                    <th class='target_segment'><span id="target_segment_span"><input type="text" id="target_segment" autocomplete="off"></span></th>
-                    <th class='transition' colspan='2'><span id="transition_span"><input type="text" id="transition" autocomplete="off"></span></th>
-                    <th class='environment' style="vertical-align: top;"><span id="environment_span"><input type="text" id="environment" autocomplete="off"></span></th>
-                    <th class='notes' style="vertical-align: top;"><span id="notes_span"><input type="text" id="notes" autocomplete="off"></span></th>
-                    <th class=''><button class="plus"></button></th>
+                <tr class='search'>
+                    <th class="source_segment"><select></select></th>
+                    <th class="target_segment"><select></select></th>
+                    <th class="transition"><select></select></th>
+                    <th class="environment"></th>
+                    <th class="notes"></th>
+                    <th></th>
+                </tr>
+                <tr class='submit'>
+                    <th class='source_segment'><input type="text" autocomplete="off"></th>
+                    <th class='target_segment'><input type="text" autocomplete="off"></th>
+                    <th class='transition'><input type="text" autocomplete="off"></th>
+                    <th class='environment'><input type="text" autocomplete="off"></th>
+                    <th class='notes'><input type="text" autocomplete="off"></th>
+                    <th><button class="plus"></button></th>
                 </tr>
             </thead>
             <tbody>
@@ -617,5 +628,6 @@ $(function() {
 <link rel="import" href="modals/tags.html">
 <link rel="import" href="modals/error.html">
 <link rel="import" href="modals/about.html">
+<link rel="import" href="modals/graph.html">
 </body>
 </html>
