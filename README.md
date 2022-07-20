@@ -24,9 +24,7 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 
 #### To-Do:
-+ in the transitions table, add a button that returns to the main table, showing that transition data
 + separate out search and submission areas
-+ sort transitions dropdown
 + when modifying something and that something already exists, merge rather than reject
 + implement custom combobox
 + figure out "or" behavior for row filtering

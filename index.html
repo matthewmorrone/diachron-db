@@ -213,6 +213,38 @@ function randomTransition() {
     }
 }
 
+function sortTables() {
+    $('.sort').click(function() {
+        let $table = $(this).parents("table");
+        let on = $table.attr("id").slice(0, -1);
+        console.log(on)
+        $('.sort i').remove();
+        let col = $(this).index();
+        let dir = $(this).attr("dir");
+        if (!dir) {
+            $table.find('tbody tr').sort((a, b) => {
+                return $(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
+            }).appendTo($table.find('tbody'));
+            $(this).attr("dir", 1);
+            $(this).append(`<i class='bi bi-arrow-down'></i>`);
+        }
+        else if (dir == 1) {
+            $table.find('tbody tr').sort((a, b) => {
+                return -$(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
+            }).appendTo($table.find('tbody'));
+            $(this).attr("dir", -1);
+            $(this).append(`<i class='bi bi-arrow-up'></i>`);
+        }
+        else if (dir == -1) {
+            $table.find('tbody tr').sort((a, b) => {
+                return $(a).attr(on) - $(b).attr(on);
+            }).appendTo($table.find('tbody'));
+            $(this).removeAttr("dir");
+            $(this).find('i').remove();
+        }
+    });
+}
+
 async function loadTable() {
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
@@ -323,32 +355,7 @@ async function loadTable() {
         });
     });
 
-    $('.sort').click(function() {
-        $('.sort i').remove();
-        let col = $(this).index();
-        let dir = $(this).attr("dir");
-        if (!dir) {
-            $('#pairs tbody tr').sort((a, b) => {
-                return $(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
-            }).appendTo('#pairs tbody');
-            $(this).attr("dir", 1);
-            $(this).append(`<i class='bi bi-arrow-down'></i>`);
-        }
-        else if (dir == 1) {
-            $('#pairs tbody tr').sort((a, b) => {
-                return -$(a).find('td').eq(col).text().localeCompare($(b).find('td').eq(col).text());
-            }).appendTo('#pairs tbody');
-            $(this).attr("dir", -1);
-            $(this).append(`<i class='bi bi-arrow-up'></i>`);
-        }
-        else if (dir == -1) {
-            $('#pairs tbody tr').sort((a, b) => {
-                return $(a).attr("pair") - $(b).attr("pair");
-            }).appendTo('#pairs tbody');
-            $(this).removeAttr("dir");
-            $(this).find('i').remove();
-        }
-    });
+    sortTables();
     // setDropdowns("pʰ", "f", "Ancient Greek,Modern Greek");
 
     $("#segmentsModal, #languagesModal").click(async function() {
@@ -440,6 +447,8 @@ async function loadTable() {
         $('#transitions .plus').click(() => {
             submitTransition();
         });
+
+        sortTables();
 
         $('#transitions tbody td:not(.ex-td,.view-td)').off("click")
         $('#transitions tbody td:not(.ex-td,.view-td)').click(function() {
