@@ -78,7 +78,7 @@ function jsonToDataList(options, id) {
 function jsonToTableRow(data, id) {
     let result = ``;
     result += `<tr ${id}='${data['id']}'>`;
-    for(key in data) {
+    for(let key in data) {
         if(key === 'id') continue;
         result += `<td class=${key}>${data[key]}</td>`;
     }
@@ -91,7 +91,7 @@ function jsonToTable(data, id) {
     result += `<table class="table" id='${id}'>`;
     result += `<thead>`;
     result += `<tr>`;
-    for(key in data[0]) {
+    for(let key in data[0]) {
         if(key === 'id') continue;
         result += `<th class='sort'>${key.replace(/_/g, ' ').toTitleCase()}</th>`;
     }
@@ -99,9 +99,9 @@ function jsonToTable(data, id) {
     result += `</tr>`;
     result += `</thead>`;
     result += `<tbody>`;
-    for(var i = 0; i < data.length; i++) {
+    for(let  i = 0; i < data.length; i++) {
         result += `<tr ${id.slice(0, id.length-1)}='${data[i]['id']}'>`;
-        for(key in data[i]) {
+        for(let key in data[i]) {
             if(key === 'id') continue;
             result += `<td class=${key}>${data[i][key]}</td>`;
         }
@@ -184,12 +184,24 @@ function inputSelect(id, data) {
     let $select = $(jsonToSelect(data, `${id}Select`));
     $(`#${id}_span`).append($select);
 
+
+
     $select.change(function() {
         $input.val($select.find(":selected").text());
         // $input.attr("select", $(this).val());
         // $select.val("");
         // $input.focus();
-    })
+    });
+}
+
+function sortDropdown(id) {
+    let $options = $(`#${id} option`);
+    $options.detach().sort(function(a, b) {
+        let at = $(a).text();
+        let bt = $(b).text();
+        return (at > bt) ? 1: ((at < bt) ? -1 : 0);
+    });
+    $options.appendTo(`#${id}`);
 }
 
 function randomTransition() {
@@ -202,8 +214,6 @@ function randomTransition() {
 }
 
 async function loadTable() {
-    console.log("load table")
-    let pairs = await $getJSON(url, {mode: 'list', table: 'pairs'});
 
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
     inputSelect("source_segment", segments);
@@ -214,20 +224,23 @@ async function loadTable() {
         return transition[0];
     });
     inputSelect("transition", transitions);
-    
+    sortDropdown("transitionSelect");
+
     $("#transitionSelect").on("change", async function(e) {
         e.preventDefault();
         let transition = $("#transitionSelect").val();
         localStorage.setItem("transition", transition);
 
-        let headers = {mode: "list", table: "pairs", "transition": transition};
+        let headers = {mode: "list", table: "pairs", transition: transition};
         let rows = await $getJSON(url, headers);
         let $table = $("#pairs tbody");
         $table.empty();
         rows.forEach(function(row) {
-            $table.append(jsonToTableRow(row, "pair"));
+            let $tableRow = $(jsonToTableRow(row, "pair"));
+            $tableRow.find(".transition").attr("colspan", 2);
+            $table.append($tableRow);
         });
-        
+
         $('#pairs tbody td:not(.ex-td)').off("click")
         $('#pairs tbody td:not(.ex-td)').dblclick(function() {
             let $td = $(this);
@@ -396,19 +409,27 @@ async function loadTable() {
         });
         table = table.slice(0, table.length-1);
 
-        $(`${modal} .modal-body`).html(`${jsonToTable(entries, "transitions")}`);
-        $(`${modal} .modal-body tbody`).each(function(elem,index) {
-            let arr = $.makeArray($("tr", this).detach());
-            arr.reverse();
-            $(this).append(arr);
-        });
 
-        $('#transitions thead').append(`<tr>
+        let $transitionsTable = $(jsonToTable(entries, "transitions"));
+        $transitionsTable.find("thead").append(`<tr>
             <th><span id='transition_source_language_span'></span></th>
             <th><span id='transition_target_language_span'></span></th>
             <th><span id='transition_citation_span'></span></th>
             <th><button class='plus'></button></th>
         </tr>`);
+        $transitionsTable.find("thead tr").each(function() {
+            $(this).prepend(`<th></th>`);
+        });
+        $transitionsTable.find("tbody tr").each(function() {
+            $(this).prepend(`<td class='view-td'><button class='view' transition='${$(this).attr("transition")}'></button></td>`);
+        });
+        $(`${modal} .modal-body`).html($transitionsTable);
+
+        $(`${modal} .modal-body tbody`).each(function(elem, index) {
+            let arr = $.makeArray($("tr", this).detach());
+            arr.reverse();
+            $(this).append(arr);
+        });
 
         let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
 
@@ -420,8 +441,8 @@ async function loadTable() {
             submitTransition();
         });
 
-        $('#transitions tbody td:not(.ex-td)').off("click")
-        $('#transitions tbody td:not(.ex-td)').click(function() {
+        $('#transitions tbody td:not(.ex-td,.view-td)').off("click")
+        $('#transitions tbody td:not(.ex-td,.view-td)').click(function() {
             let $td = $(this);
             let text = $td.text();
             let $input = $(`<input class='edit' value='${text}' />`);
@@ -450,6 +471,13 @@ async function loadTable() {
                 }
             });
             $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
+        });
+
+        $('#transitions .view').click(async function(e) {
+            let transitionId = $(this).attr("transition");
+            let transition = $(`#transitionSelect option[value='${transitionId}']`).text();
+            $("#transitionSelect").val(transitionId).trigger("change");
+            $modal.modal('hide');
         });
 
         $('#transitions .ex').click(async function(e) {
@@ -507,7 +535,7 @@ $(function() {
     $.ajaxSetup({cache: false});
 
     loadTable();
-    
+
     $("[rel='import']").each(async function() {
         let url = $(this).attr("href");
         let result = await $get(url);
@@ -556,7 +584,7 @@ $(function() {
                 <tr>
                     <th class="source_segment sort" scope="col">Source Segment</th>
                     <th class="target_segment sort" scope="col">Target Segment</th>
-                    <th class="transition sort" scope="col">Transition</th>
+                    <th class="transition sort" colspan='2' scope="col">Transition</th>
                     <th class="environment sort" scope="col">Environment</th>
                     <th class="notes sort" scope="col">Notes</th>
                     <th scope="col"></th>
@@ -564,7 +592,7 @@ $(function() {
                 <tr>
                     <th class='source_segment'><span id="source_segment_span"><input type="text" id="source_segment" autocomplete="off"></span></th>
                     <th class='target_segment'><span id="target_segment_span"><input type="text" id="target_segment" autocomplete="off"></span></th>
-                    <th class='transition'><span id="transition_span"><input type="text" id="transition" autocomplete="off"></span></th>
+                    <th class='transition' colspan='2'><span id="transition_span"><input type="text" id="transition" autocomplete="off"></span></th>
                     <th class='environment' style="vertical-align: top;"><span id="environment_span"><input type="text" id="environment" autocomplete="off"></span></th>
                     <th class='notes' style="vertical-align: top;"><span id="notes_span"><input type="text" id="notes" autocomplete="off"></span></th>
                     <th class=''><button class="plus"></button></th>

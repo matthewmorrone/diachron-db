@@ -13,7 +13,7 @@ th {
 select:focus, input:focus, textarea:focus {
     outline: none;
 }
-.ex, .plus {
+.ex, .plus, .view {
     width: 1.5em;
     height: 1.5em;
     color: #000;
@@ -27,6 +27,9 @@ select:focus, input:focus, textarea:focus {
 }
 .plus {
     background: url('img/plus.svg') no-repeat;
+}
+.view {
+    background: url('img/view.svg') no-repeat;
 }
 tag::before {
     content: '\A'; 
