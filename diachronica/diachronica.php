@@ -274,26 +274,24 @@ foreach ($sections as $key=>$section) {
         $family = $sectionMatches["family"];
     }
 
-    $tables = $section->getElementsByTagName('table');
-    if (count($tables)) {
-        $tableData = [];
-        foreach ($tables as $table){
-            $tableDatum = $table->c14n();
-            $tableDatum = preg_replace('#<[^>]+>#', ' ', $tableDatum);
-            $tableDatum = preg_replace('!\s+!', ' ', $tableDatum);
-            $tableDatum = trim($tableDatum);
-            $tableData[] = $tableDatum;
+    $segments = $section->getElementsByTagName('div');
+    if (count($segments)) {
+        $segmentData = "";
+        foreach ($segments as $table){
+            $segmentData .= $table->nodeValue." ";
         }
+        $segmentData = explode(" ", $segmentData);
+        $segmentData = array_filter($segmentData);
         $result = [
             "key" => $key,
             "family" => $family,
-            "original" => $transition,
             "citation" => $section->getElementsByTagName('p')->item(0)->nodeValue,
-            "data" => $tableData
+            "segments" => $segmentData
         ];
         $results[] = $result;
         continue;
     }
+    continue;
 
     $transitionMatches = preg_match_named("/(?<index>[\d\.]+)\s*(?<source>[$chars]+?) to (?<target>[$chars]+)/u", $transition, true);
     if (!count($transitionMatches)) {
@@ -398,8 +396,7 @@ foreach ($sections as $key=>$section) {
 
     $results[] = $result;
 }
-// echo json_encode($results);
-print_r($results); 
+echo json_encode($results);
 
 
 function database($results) {

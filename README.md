@@ -24,6 +24,9 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 
 #### To-Do:
++ Separate out search and submission areas
++ When modifying something and that something already exists, merge rather than reject
++ In the transitions table, add a button that returns to the main table, showing that transition data
 + implement custom combobox
 + figure out "or" behavior for row filtering
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
