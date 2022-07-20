@@ -32,7 +32,6 @@ function hot_fixes($text) {
     return $text;
 }
 
-
 $doc = new DOMDocument();
 $doc->loadHTML('<?xml encoding="UTF-8">' . $html);
 $doc->preserveWhiteSpace = false;
@@ -263,7 +262,6 @@ function process_rules($resultRules) {
 
     return $resultRules;
 }
-
 foreach ($sections as $key=>$section) {
     if ($key < 6) continue;
     $transition = $section->getElementsByTagName('h2')->item(0)->textContent;
@@ -276,8 +274,31 @@ foreach ($sections as $key=>$section) {
         $family = $sectionMatches["family"];
     }
 
+    $tables = $section->getElementsByTagName('table');
+    if (count($tables)) {
+        $tableData = [];
+        foreach ($tables as $table){
+            $tableDatum = $table->c14n();
+            $tableDatum = preg_replace('#<[^>]+>#', ' ', $tableDatum);
+            $tableDatum = preg_replace('!\s+!', ' ', $tableDatum);
+            $tableDatum = trim($tableDatum);
+            $tableData[] = $tableDatum;
+        }
+        $result = [
+            "key" => $key,
+            "family" => $family,
+            "original" => $transition,
+            "citation" => $section->getElementsByTagName('p')->item(0)->nodeValue,
+            "data" => $tableData
+        ];
+        $results[] = $result;
+        continue;
+    }
+
     $transitionMatches = preg_match_named("/(?<index>[\d\.]+)\s*(?<source>[$chars]+?) to (?<target>[$chars]+)/u", $transition, true);
-    if (!count($transitionMatches)) continue;
+    if (!count($transitionMatches)) {
+        continue;
+    }
     $result = [
         "key" => $key,
         "family" => $family,
@@ -378,6 +399,7 @@ foreach ($sections as $key=>$section) {
     $results[] = $result;
 }
 // echo json_encode($results);
+print_r($results); 
 
 
 function database($results) {
