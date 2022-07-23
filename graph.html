@@ -87,7 +87,11 @@ async function doStuff() {
         elements: languageData,
         selectionType: 'single',
         layout: {
-            name: $("#layout").val()
+            name: $("#layout").val(),
+            animate: true,
+            nodeDimensionsIncludeLabels: true,
+            fit: true,
+            padding: 50,
         },
         style: [{
             selector: 'node',
@@ -129,10 +133,9 @@ async function doStuff() {
         });
     });
     $("#layout").change(function() {
-        let animate = $(this).val() !== 'cise' && $(this).val() !== 'avsdf';
         let layout = cy.layout({
             name: $(this).val(),
-            animate: animate,
+            animate: true,
             nodeDimensionsIncludeLabels: true,
             fit: true,
             padding: 20,
@@ -146,6 +149,9 @@ $(function() {
 });
 </script>
 <style>
+*::-webkit-scrollbar { 
+    display: none;
+}
 #cy {
     width: 100%;
     height: 100%;

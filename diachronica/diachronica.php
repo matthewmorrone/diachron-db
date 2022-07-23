@@ -6,7 +6,7 @@ error_reporting(E_ERROR | E_PARSE);
 echo "<pre>";
 
 $html = mb_convert_encoding(
-    file_get_contents('diachronica.html'),
+    file_get_contents('diachronica-small.html'),
     // file_get_contents('https://chridd.nfshost.com/diachronica/all'),
     "HTML-ENTITIES",
     "UTF-8"
@@ -91,9 +91,12 @@ function process_rules($resultRules) {
         $resultRules[$ruleKey] = $resultRule;
     }
     foreach ($resultRules as $ruleKey=>$resultRule) {
-        $source = preg_match_named('/\{(?<s1>.+?),(?<s2>.+?)(,(?<s3>.+))?(,(?<s4>.+))?(,(?<s5>.+))?(,(?<s6>.+))?\}(?<opt>\(.+\))?/', $resultRule['source']);
-        $target = preg_match_named('/\{(?<t1>.+?),(?<t2>.+?)(,(?<t3>.+))?(,(?<t4>.+))?(,(?<t5>.+))?(,(?<t6>.+))?\}(?<opt>\(.+\))?/', $resultRule['target']);
+        // this is for merge
+        $source = preg_match_named('/\{(?<s1>.+?),(?<s2>.+?)(,(?<s3>.+?))?(,(?<s4>.+?))?(,(?<s5>.+?))?(,(?<s6>.+?))?\}(?<opt>\(.+\))?/', $resultRule['source']);
+        // this is for split
+        $target = preg_match_named('/\{(?<t1>.+?),(?<t2>.+?)(,(?<t3>.+?))?(,(?<t4>.+?))?(,(?<t5>.+?))?(,(?<t6>.+?))?\}(?<opt>\(.+\))?/', $resultRule['target']);
         if (count($source)) {
+
             $opt = $source["opt"];
             if (!$source["s3"]) unset($source["s3"]);
             if (!$source["s4"]) unset($source["s4"]);
@@ -115,6 +118,7 @@ function process_rules($resultRules) {
                 if ($resultRule["notes"]) {
                     $resultSubrule["notes"] = $resultRule["notes"];
                 }
+                $resultSubrule["type"] = "merge";
                 $resultRule["subrules"][] = $resultSubrule;
             }
             unset($resultRule["original"]);
@@ -145,6 +149,7 @@ function process_rules($resultRules) {
                 if ($resultRule["notes"]) {
                     $resultSubrule["notes"] = $resultRule["notes"];
                 }
+                $resultSubrule["type"] = "split";
                 $resultRule["subrules"][] = $resultSubrule;
             }
             unset($resultRule["original"]);
@@ -152,6 +157,9 @@ function process_rules($resultRules) {
             unset($resultRule["target"]);
             unset($resultRule["environment"]);
             unset($resultRule["notes"]);
+        }
+        else {
+            if (!$resultRule["type"]) $resultRule["type"] = "shift";
         }
         $resultRules[$ruleKey] = $resultRule;
     }
@@ -291,7 +299,6 @@ foreach ($sections as $key=>$section) {
         $results[] = $result;
         continue;
     }
-    continue;
 
     $transitionMatches = preg_match_named("/(?<index>[\d\.]+)\s*(?<source>[$chars]+?) to (?<target>[$chars]+)/u", $transition, true);
     if (!count($transitionMatches)) {
@@ -396,7 +403,7 @@ foreach ($sections as $key=>$section) {
 
     $results[] = $result;
 }
-echo json_encode($results);
+// echo json_encode($results);
 
 
 function database($results) {
@@ -407,7 +414,7 @@ function database($results) {
         $target_language_id = get_or_add_language($result["target_language"]);
         $citation = $result["citation"];
         get_or_add_transition($source_language_id, $target_language_id, $citation);
-        printr(json_encode($result));
+        // printr(json_encode($result));
     }
     foreach($results as $result) {
         foreach($result["rules"] as $rule) {
@@ -421,7 +428,7 @@ function database($results) {
             ];
             try {
                 add_pair($data);
-                printr(json_encode($data));
+                // printr(json_encode($data));
             }
             catch(Exception $e) {
                 printr($e->getMessage());
@@ -439,7 +446,7 @@ function database_cleanup() {
 }
 
 
-// database($results);
+database($results);
 // database_cleanup();
 
 set_time_limit(120);
