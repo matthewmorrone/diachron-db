@@ -24,7 +24,7 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 
 #### To-Do:
-+ separate out search and submission areas, if not, implement custom combobox
++ figure out what's going on with the tagify error
 + when modifying something and that something already exists, merge rather than reject
 + figure out "or" behavior for row filtering
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation

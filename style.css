@@ -4,6 +4,9 @@
 header, content, footer {
     text-align: center;
 }
+table {
+    table-layout: fixed;
+}
 .table > :not(:first-child), tbody {
     border-top: 0px solid currentColor !important;
 }
@@ -14,6 +17,7 @@ select:focus, input:focus, textarea:focus {
     outline: none;
 }
 .ex, .plus, .view {
+    float: left;
     width: 1.5em;
     height: 1.5em;
     color: #000;
