@@ -50,21 +50,31 @@
     padding: 0px;
     margin: -1px;
 }
+.colorchange {
+    animation: colorchange 4s infinite;
+}
+
+@keyframes colorchange {
+    0%   {background-color: red;}
+    25%  {background-color: green;}
+    75%  {background-color: blue;}
+    100% {background-color: yellow;}
+}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/@yaireo/tagify"></script>
 <script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
-<script src='https://matthewmorrone.com/icon.js'></script>
-<script src='https://matthewmorrone.com/jquery.js'></script>
+<script src='js/icon.js'></script>
+<script src='js/jquery.js'></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.modern.js"></script>
-<script src='utils.js'></script>
-<script src='keyboard.js'></script>
+<script src='js/utils.js'></script>
+<script src='js/keyboard.js'></script>
 <script>
 let url = `mysql.php`;
 
 function jsonToSelect(options, id) {
     let result = `<select id='${id}'>`;
-        result += `<option></option>`
+        result += `<option></option>`;
     Object.entries(options).forEach(function(entry) {
         let [key, val] = entry;
         result += `<option value='${key}'>${val}</option>`;
@@ -73,7 +83,7 @@ function jsonToSelect(options, id) {
     return result;
 }
 function jsonToOptions(options, id) {
-    let result = `<option></option>`
+    let result = `<option></option>`;
     Object.entries(options).forEach(function(entry) {
         let [key, val] = entry;
         result += `<option value='${key}'>${val}</option>`;
@@ -82,7 +92,7 @@ function jsonToOptions(options, id) {
 }
 function jsonToDataList(options, id) {
     let result = `<input type=text name=${id} list=${id} />`;
-    result += `<datalist id='${id}'>`;
+        result += `<datalist id='${id}'>`;
     Object.entries(options).forEach(function(entry) {
         let [key, val] = entry;
         result += `<option data-id='${key}'>${val}</option>`;
@@ -91,8 +101,7 @@ function jsonToDataList(options, id) {
     return result;
 }
 function jsonToTableRow(data, id) {
-    let result = ``;
-    result += `<tr ${id}='${data['id']}'>`;
+    let result = `<tr ${id}='${data['id']}'>`;
     for(let key in data) {
         if(key === 'id') continue;
         result += `<td class=${key}>${data[key]}</td>`;
@@ -126,55 +135,6 @@ function jsonToTable(data, id) {
     result += `</tbody>`;
     result += `</table>`;
     return result;
-}
-async function submitPair() {
-    let transition = $(`.submit .transition input`).val();
-    if (transition.includes(",")) transition = transition.split(",");
-    else if (transition.includes(" → ")) transition = transition.split(" → ");
-    else return;
-    let [source_language, target_language] = transition;
-
-    let submit = {
-        mode: 'insert',
-        table: 'pair',
-        debug: true,
-        data: {
-            source_segment: $('.submit .source_segment input').val(),
-            target_segment: $('.submit .target_segment input').val(),
-            source_language: source_language,
-            target_language: target_language,
-            environment: $('.submit .environment input').val(),
-            notes: $('.submit .notes input').val(),
-        }
-    };
-    console.log(submit)
-    if(!submit.data.source_segment
-    || !submit.data.target_segment
-    || !submit.data.source_language
-    || !submit.data.target_language
-    ) {
-        return;
-    }
-    let result = await $get(url, submit);
-    if (result) {
-        await loadTable();
-        $(`.submit .transition input`).val(transition);
-    }
-}
-async function submitTransition() {
-    let submit = {
-        mode: 'insert',
-        table: 'transition',
-        debug: true,
-        data: {
-            source_language: $('#transition .source_language input').val(),
-            target_language: $('#transition .target_language input').val(),
-            citation: $('#transition .citation input').val(),
-        }
-    };
-    if(!submit.data.source_language || !submit.data.target_language) return;
-    let result = await $get(url, submit);
-    if (result) $("#transitions").click()
 }
 function download(filename, text) {
     let element = document.createElement('a');
@@ -238,33 +198,72 @@ function sortTables() {
     });
 }
 
-async function loadPairs(transition) {
+async function submitPair() {
+    let transition = $(`.submit .transition input`).val();
+    if (transition.includes(",")) transition = transition.split(",");
+    else if (transition.includes(" → ")) transition = transition.split(" → ");
+    else return;
+    let [source_language, target_language] = transition;
 
-let headers = {mode: "list", table: "pairs", transition: transition};
-let rows = await $getJSON(url, headers);
-console.log(rows.size()+" rows loaded")
-let $table = $("#pairs tbody");
-$table.empty();
-
-rows && rows.forEach(function(row) {
-    let $tableRow = $(jsonToTableRow(row, "pair"));
-    $table.append($tableRow);
-});
+    let submit = {
+        mode: 'insert',
+        table: 'pair',
+        output: true,
+        data: {
+            source_segment: $('.submit .source_segment input').val(),
+            target_segment: $('.submit .target_segment input').val(),
+            source_language: source_language,
+            target_language: target_language,
+            environment: $('.submit .environment input').val(),
+            notes: $('.submit .notes input').val(),
+        }
+    };
+    console.log(submit)
+    if(!submit.data.source_segment
+    || !submit.data.target_segment
+    || !submit.data.source_language
+    || !submit.data.target_language
+    ) {
+        return;
+    }
+    let result = await $get(url, submit);
+    if (result) {
+        await loadPairs($(`.submit .transition input`).val());
+        console.log(result);
+    }
+}
+async function submitTransition() {
+    let submit = {
+        mode: 'insert',
+        table: 'transition',
+        data: {
+            source_language: $('#transition .source_language input').val(),
+            target_language: $('#transition .target_language input').val(),
+            citation: $('#transition .citation input').val(),
+        }
+    };
+    if(!submit.data.source_language || !submit.data.target_language) return;
+    let result = await $get(url, submit);
+    if (result) $("#transitions").click()
 }
 
+async function loadPairs(transition) {
 
-async function loadData() {
-    let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
+    let headers = {
+        mode: "list", 
+        table: "pairs", 
+        transition: transition
+    };
+    let rows = await $getJSON(url, headers);
+    console.log(rows.size()+" rows loaded")
+    let $table = $("#pairs tbody");
+    $table.empty();
 
-    $(".search .source_segment select").html(jsonToOptions(segments));
-    $(".search .target_segment select").html(jsonToOptions(segments));
-
-    let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
-    transitions = transitions.map(transition => {
-        return transition.transition;
+    rows && rows.forEach(function(row) {
+        let $tableRow = $(jsonToTableRow(row, "pair"));
+        $table.append($tableRow);
     });
-    $(".search .transition select").html(jsonToOptions(transitions));
-
+    
     $('#pairs tbody td:not(.submit)').off("click")
     $('#pairs tbody td:not(.submit)').dblclick(function() {
         let $td = $(this);
@@ -324,15 +323,37 @@ async function loadData() {
         let button = e.target;
         let id = button.getAttribute('data-bs-id');
 
-        let headers = {debug: true, mode: "remove", table: "pair", id: id};
+        let headers = {mode: "remove", table: "pair", id: id};
 
         let result = await $get(url, headers);
+        console.log(result)
 
-        // if (result) $(this).parents("tr").remove();
-        // if (result) loadTable();
+        // if (result) loadPairs();
     });
+}
+$.fn.selected = function() {
+    return $(this).find("option:selected").text();
+}
+$.fn.byValue = function(text) {
+    return $(this).find("option").filter(function() {
+        return $(this).text() === text;
+    });
+}
+$.fn.selectOption = function(text) {
+    return $(this).byValue(text).prop('selected', true);
+}
 
+async function loadData() {
+    let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
 
+    $(".search .source_segment select").html(jsonToOptions(segments));
+    $(".search .target_segment select").html(jsonToOptions(segments));
+
+    let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
+    transitions = transitions.map(transition => {
+        return transition.transition;
+    });
+    $(".search .transition select").html(jsonToOptions(transitions));
 
     let transition = localStorage.getItem("transition");
     $(".search .transition select").on("change", async function() {
@@ -341,12 +362,8 @@ async function loadData() {
         loadPairs(transition);
     });
     if (transition) {
-        $(".search .transition select option").filter(function() {
-            return $(this).text() === transition;
-        }).prop('selected', true);
-        $(".search .transition select").trigger("change")
+        $(".search .transition select").selectOption(transition).trigger("change")
     }
-
 
     $("input").on("focus", function(e) {
         $selectedInput = $(this);
@@ -354,6 +371,10 @@ async function loadData() {
             inputName: $(e)[0].target.id
         });
     });
+
+    $(".submit .transition input").focus(function() {
+        $(this).val($(".search .transition select").selected()).select();
+    })
 
     sortTables();
 }

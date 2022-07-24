@@ -414,7 +414,6 @@ function database($results) {
         $target_language_id = get_or_add_language($result["target_language"]);
         $citation = $result["citation"];
         get_or_add_transition($source_language_id, $target_language_id, $citation);
-        // printr(json_encode($result));
     }
     foreach($results as $result) {
         foreach($result["rules"] as $rule) {
@@ -428,7 +427,6 @@ function database($results) {
             ];
             try {
                 add_pair($data);
-                // printr(json_encode($data));
             }
             catch(Exception $e) {
                 printr($e->getMessage());
