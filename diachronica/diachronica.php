@@ -11,11 +11,18 @@ $html = mb_convert_encoding(
     "HTML-ENTITIES",
     "UTF-8"
 );
-
 function fix_encoding($text) {
     $repl = ["É¨", "Ç", "Ê", "Ç", "Ç", "Å", "É£", "Ã°", "É̣", "ı̄"];
     $with = ["ɨ",  "ǁ",  "ʼ",  "ǀ",  "ǂ",  "ŋ",  "γ",  "δ", "ɔ", "ī"];
     return str_replace($repl, $with, $text);
+}
+function database_cleanup() {
+    $query = "UPDATE pairs SET notes = REGEXP_REPLACE(REGEXP_REPLACE(notes, '\\)$', ''), '^\\(', '') WHERE notes LIKE '(%)'";
+    do_query($query);
+    $query = "UPDATE pairs SET notes = REGEXP_REPLACE(REGEXP_REPLACE(notes, '”$', ''), '^“', '') WHERE notes LIKE '“%”'";
+    do_query($query);
+    $query = "UPDATE pairs SET environment = REGEXP_REPLACE(environment, '(.+)”(.+)', '\\1ˈ\\2') WHERE environment LIKE '%”V%'";
+    do_query($query);
 }
 function preg_replace_all($find, $repl, $text) {
     while (preg_match($find, $text)) {
@@ -434,18 +441,8 @@ function database($results) {
         }
     }
 }
-function database_cleanup() {
-    $query = "UPDATE pairs SET notes = REGEXP_REPLACE(REGEXP_REPLACE(notes, '\\)$', ''), '^\\(', '') WHERE notes LIKE '(%)'";
-    do_query($query);
-    $query = "UPDATE pairs SET notes = REGEXP_REPLACE(REGEXP_REPLACE(notes, '”$', ''), '^“', '') WHERE notes LIKE '“%”'";
-    do_query($query);
-    $query = "UPDATE pairs SET environment = REGEXP_REPLACE(environment, '(.+)”(.+)', '\\1ˈ\\2') WHERE environment LIKE '%”V%'";
-    do_query($query);
-}
-
 
 database($results);
-// database_cleanup();
 
 set_time_limit(120);
 ?>

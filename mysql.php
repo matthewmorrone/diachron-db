@@ -33,7 +33,7 @@ if ($_GET) {
         break;
         case "insert":
             switch($table) {
-                case "pair":        echo add_pair($data, $debug); break;
+                case "pair":        echo add_pair($data); break;
                 case "segment":     echo add_segment($value);     break;
                 case "language":    echo add_language($value);    break;
                 case "transition":
@@ -132,14 +132,15 @@ function reset_database() {
     $query = "SET FOREIGN_KEY_CHECKS = 1";
     do_query($query);
 }
-function do_query($query) {
+function do_query($query, $debug=false) {
     GLOBAL $mysqli;
-    echo "$query<br>";
+    if ($debug) echo "$query<br>";
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
 }
-function get_query($query) {
+function get_query($query, $debug=false) {
     GLOBAL $mysqli;
+    if ($debug) echo "$query<br>";
     $result = $mysqli->query($query) or die($mysqli->error);
     while($row = $result->fetch_assoc()) $results[] = $row;
     return $results;
@@ -303,7 +304,7 @@ function get_transition($source, $target) {
     }
     return $results;
 }
-function update_transition($data, $debug=false) {
+function update_transition($data) {
     $id = $data["id"];
 
     $source_language = $data["source_language"];
@@ -314,16 +315,11 @@ function update_transition($data, $debug=false) {
     $target_language_id = get_or_add_language($target_language);
 
     $query = "UPDATE transitions SET source_language_id = '$source_language_id' , target_language_id = '$target_language_id' , citation = '$citation' WHERE id='$id'";
-    if ($debug) echo $query."\n";
     do_query($query);
-    if ($debug) echo "update_transition $id $source_language_id $target_language_id $citation\n";
 }
-function add_transition($source_language_id, $target_language_id, $citation='', $debug=false) {
+function add_transition($source_language_id, $target_language_id, $citation='') {
     $query = "INSERT INTO transitions (source_language_id, target_language_id, citation) VALUES ('$source_language_id', '$target_language_id', '$citation')";
     $result = do_query($query)->insert_id;
-    if ($debug) {
-        echo "add_transition $source_language_id $target_language_id $citation $result\n";
-    }
     return $result;
 }
 function get_or_add_segment($segment) {
@@ -342,11 +338,8 @@ function get_or_add_transition($source, $target, $citation='') {
         return add_transition($source, $target, $citation);
     }
 }
-function update_pair($data, $debug=false) {
+function update_pair($data) {
     $id = $data["id"];
-    if ($debug) {
-        echo "id: $id\n";
-    }
     $source_segment = $data["source_segment"];
     $target_segment = $data["target_segment"];
     $source_language = $data["source_language"];
@@ -356,21 +349,10 @@ function update_pair($data, $debug=false) {
 
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
-    if ($debug) {
-        echo "source_segment_id: $source_segment ($source_segment_id)\n";
-        echo "target_segment_id: $target_segment ($target_segment_id)\n";
-    }
     $source_language_id = get_or_add_language($source_language);
     $target_language_id = get_or_add_language($target_language);
-    if ($debug) {
-        echo "source_language_id: $source_language ($source_language_id)\n";
-        echo "target_language_id: $target_language ($target_language_id)\n";
-    }
 
     $transition_id = get_or_add_transition($source_language_id, $target_language_id);
-    if ($debug) {
-        echo "transition_id: $transition_id\n";
-    }
 
     $query = "UPDATE pairs
     SET source_segment_id = '$source_segment_id'
@@ -383,7 +365,7 @@ function update_pair($data, $debug=false) {
     do_query($query);
     echo "update_pair $id $source_segment_id $target_segment_id $transition_id";
 }
-function add_pair($data, $debug=false) {
+function add_pair($data) {
     $source_segment = $data["source_segment"];
     $target_segment = $data["target_segment"];
     $source_language = $data["source_language"];
@@ -393,34 +375,24 @@ function add_pair($data, $debug=false) {
 
     $source_segment_id = get_or_add_segment($source_segment);
     $target_segment_id = get_or_add_segment($target_segment);
-    if ($debug) {
-        echo "source_segment_id: $source_segment ($source_segment_id)\n";
-        echo "target_segment_id: $target_segment ($target_segment_id)\n";
-    }
 
     $transition_id = $data["transition"];
     if (!$transition_id) {
         $source_language_id = get_or_add_language($source_language);
         $target_language_id = get_or_add_language($target_language);
-        if ($debug) {
-            echo "source_language_id: $source_language ($source_language_id)\n";
-            echo "target_language_id: $target_language ($target_language_id)\n";
-        }
         $transition_id = get_or_add_transition($source_language_id, $target_language_id);
     }
-    if ($debug) echo "transition_id: $transition_id\n";
 
     $query = "SELECT * from pairs WHERE source_segment_id = '$source_segment_id' AND target_segment_id = '$target_segment_id' AND transition_id = '$transition_id'";
-    if ($debug) echo $query."\n";
     $pair = get_query($query);
-    if (!empty($pair) and $debug) {
-        echo "pair already exists: ".json_encode($pair)."\n";
+    if (!empty($pair)) {
+        $id = $pair[0]["id"];
+        $query = "UPDATE pairs SET environment = concat(environment, ' $environment') WHERE id='$id'";
+        do_query($query);
     }
     else {
         $query = "INSERT INTO pairs (source_segment_id, target_segment_id, transition_id, environment, notes) VALUES ('$source_segment_id', '$target_segment_id', '$transition_id', '$environment', '$notes');";
-        if ($debug) echo $query."\n";
-        $result = do_query($query)->insert_id;
-        if ($debug) echo "add_pair : $source_segment $target_segment $source_language $target_language $environment $notes : $result\n";
+        return do_query($query)->insert_id;
     }
 }
 function update_segment($id, $value) {
