@@ -24,12 +24,6 @@ function database_cleanup() {
     $query = "UPDATE pairs SET environment = REGEXP_REPLACE(environment, '(.+)”(.+)', '\\1ˈ\\2') WHERE environment LIKE '%”V%'";
     do_query($query);
 }
-function preg_replace_all($find, $repl, $text) {
-    while (preg_match($find, $text)) {
-        $text = preg_replace($find, $repl, $text);
-    }
-    return $text;
-}
 function hot_fixes($text) {
     $text = preg_replace_all("/\[(\-) (.+)\]/", "[$1$2]", $text);
     $text = preg_replace_all("/\[(\+) (.+)\]/", "[$1$2]", $text);

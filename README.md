@@ -25,6 +25,8 @@ $database = (isset($database) ? $database : "diachron");
 
 #### To-Do:
 + figure out what's going on with the tagify error
++ switch all php functions to accepting $data
++ put back logging functionality
 + when modifying something and that something already exists, merge rather than reject
 + figure out "or" behavior for row filtering
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
@@ -40,3 +42,7 @@ $database = (isset($database) ? $database : "diachron");
   + sql injection prevention / input sanitization
   + regular backups of data, data approval
   + view and edit modes
+
+#### Known Bugs:
++ opening and closing the modal causes loadPairs to be called too many times
++ 

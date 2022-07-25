@@ -4,7 +4,7 @@
 header, content, footer {
     text-align: center;
 }
-table {
+#pairs {
     table-layout: fixed;
 }
 .table > :not(:first-child), tbody {

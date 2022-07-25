@@ -66,8 +66,8 @@
 <script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
 <script src='js/icon.js'></script>
 <script src='js/jquery.js'></script>
-<script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.modern.js"></script>
 <script src='js/utils.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.modern.js"></script>
 <script src='js/keyboard.js'></script>
 <script>
 let url = `mysql.php`;
@@ -84,7 +84,7 @@ function jsonToSelect(options, id) {
 }
 function jsonToOptions(options, id) {
     let result = `<option></option>`;
-    Object.entries(options).forEach(function(entry) {
+    options.forEach(function(entry) {
         let [key, val] = entry;
         result += `<option value='${key}'>${val}</option>`;
     });
@@ -249,12 +249,22 @@ async function submitTransition() {
 
 async function loadPairs(transition) {
 
+    if (!transition) transition = localStorage.getItem("transition");
     let headers = {
         mode: "list", 
         table: "pairs", 
-        transition: transition
+        data: {
+            transition: transition
+        }
     };
+    if ($(".search .source_segment select").val()) {
+        headers.data.source_segment = $(".search .source_segment select").selected();
+    }
+    if ($(".search .target_segment select").val()) {
+        headers.data.target_segment = $(".search .target_segment select").selected();
+    }
     let rows = await $getJSON(url, headers);
+    if (!rows) return;
     console.log(rows.size()+" rows loaded")
     let $table = $("#pairs tbody");
     $table.empty();
@@ -304,7 +314,7 @@ async function loadPairs(transition) {
                 console.log(headers.data);
                 let result = await $get(url, headers);
                 console.log(result);
-                if (result) loadTable();
+                if (result) loadPairs();
             }
         });
         $input.keydown(function(e) {
@@ -328,7 +338,7 @@ async function loadPairs(transition) {
         let result = await $get(url, headers);
         console.log(result)
 
-        // if (result) loadPairs();
+        if (result) loadPairs();
     });
 }
 $.fn.selected = function() {
@@ -345,25 +355,38 @@ $.fn.selectOption = function(text) {
 
 async function loadData() {
     let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
-
+    segments = segments.map(segment => {
+        return [segment.id, segment.value];
+    });
     $(".search .source_segment select").html(jsonToOptions(segments));
     $(".search .target_segment select").html(jsonToOptions(segments));
 
     let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
     transitions = transitions.map(transition => {
-        return transition.transition;
+        return [transition.id, transition.transition];
     });
     $(".search .transition select").html(jsonToOptions(transitions));
 
     let transition = localStorage.getItem("transition");
-    $(".search .transition select").on("change", async function() {
-        let transition = $(this).find("option:selected").text();
+    $(".search select").on("change", async function() {
+        let transition = $(".search .transition select").find("option:selected").text();
         localStorage.setItem("transition", transition);
         loadPairs(transition);
     });
     if (transition) {
-        $(".search .transition select").selectOption(transition).trigger("change")
+        $(".search .transition select").selectOption(transition).trigger("change");
     }
+
+    $(document).on("keydown", ".search select", function(e) {
+        console.log(e.which)
+    })
+    $(".search select").keydown(function(e) {
+        console.log(e.which)
+    });
+
+    $(".submit .transition input").focus(function() {
+        $(this).val($(".search .transition select").selected()).select();
+    });
 
     $("input").on("focus", function(e) {
         $selectedInput = $(this);
@@ -371,10 +394,6 @@ async function loadData() {
             inputName: $(e)[0].target.id
         });
     });
-
-    $(".submit .transition input").focus(function() {
-        $(this).val($(".search .transition select").selected()).select();
-    })
 
     sortTables();
 }
@@ -387,12 +406,8 @@ function modalFunctionality() {
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
         let entries = await $getJSON(url, {mode: "list", table: table});
-        entries = Object.entries(entries).map(function(entry) {
-            return {id: entry[0], value: entry[1]};
-        }).filter(function(entry) {
-            return entry.value.trim() !== '';
-        });
         entries = JSON.stringify(entries).escapeHTML();
+        console.log(entries)
         $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
         table = table.slice(0, table.length-1);
         let tagInput = document.querySelector('#tags');
@@ -412,7 +427,8 @@ function modalFunctionality() {
         });
 
         $modal.on('hide.bs.modal', function(e) {
-            loadTable();
+            console.count();
+            loadPairs();
         });
     });
 
@@ -424,17 +440,16 @@ function modalFunctionality() {
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
         let entries = await $getJSON(url, {mode: "list", table: table});
-        entries = Object.entries(entries).map(function(entry) {
-            let [id, val] = entry;
-            let [source, target] = val[0].split(" → ")
-            let citation = val[1];
+        entries = entries.map(function(entry) {
+            let [source, target] = entry.transition.split(" → ")
             return {
-                id: id,
+                id: entry.id,
                 source_language: source,
                 target_language: target,
-                citation: citation
+                citation: entry.citation
             };
         });
+
         table = table.slice(0, table.length-1);
 
         let $transitionsTable = $(jsonToTable(entries, "transitions"));
@@ -494,7 +509,7 @@ function modalFunctionality() {
                     };
                     let result = await $get(url, headers);
                     console.log(result);
-                    if (result) loadTable();
+                    if (result) loadPairs();
                 }
             });
             $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
@@ -517,7 +532,7 @@ function modalFunctionality() {
         });
 
         $modal.on('hide.bs.modal', function(e) {
-            loadTable();
+            loadPairs();
         });
 
     });
