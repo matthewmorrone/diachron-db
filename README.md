@@ -45,4 +45,3 @@ $database = (isset($database) ? $database : "diachron");
 
 #### Known Bugs:
 + opening and closing the modal causes loadPairs to be called too many times
-+ 
