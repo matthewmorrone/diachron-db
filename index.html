@@ -274,11 +274,13 @@ async function loadPairs(transition) {
     if ($(".search .target_segment select").val()) {
         headers.data.target_segment = $(".search .target_segment select").selected();
     }
+    let $table = $("#pairs tbody");
+    $table.empty();
+    if (!headers.data.transition) return;
     let rows = await $getJSON(url, headers);
     if (!rows) return;
     console.log(rows.size()+" rows loaded")
-    let $table = $("#pairs tbody");
-    $table.empty();
+
 
     rows && rows.forEach(function(row) {
         let $tableRow = $(jsonToTableRow(row, "pair"));
@@ -372,14 +374,6 @@ async function loadData() {
     sortTables();
 }
 function modalFunctionality() {
-    $(document).on("keydown", ".search select", function(e) {
-        console.log(e.which)
-    })
-    $(".search select").keydown(function(e) {
-        console.log(e.which)
-    });
-
-    
     $(document).on("click", "#pairs .plus", function() {
         submitPair();
     });
