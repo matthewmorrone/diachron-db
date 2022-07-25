@@ -19,16 +19,29 @@ $database = (isset($database) ? $database : "diachron");
 + Navigate to <code>localhost/diachron-db</code> in your browser
 
 #### Uses:
++ [Index Diachronica](https://chridd.nfshost.com/diachronica/all)
 + [Bootstrap 5](https://getbootstrap.com/)
 + [tagify](https://yaireo.github.io/tagify/)
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
++ [cytoscape.js](https://js.cytoscape.org/)
 
 #### To-Do:
-+ figure out what's going on with the tagify error
++ consider having separate phone table rather than just segment table
++ create many-to-many table languages_segments or languages_phones
++ store segments parsed from index diachronica in database
+  + include segments in source column of rules
++ create look up table that returns all phones of a given abbreviation
+  + then filter for only those that belong to a specific language
+
+#### Refactoring:
 + switch all php functions to accepting $data
-+ put back logging functionality
 + when modifying something and that something already exists, merge rather than reject
-+ figure out "or" behavior for row filtering
+
+#### Known Bugs:
++ opening and closing the modal causes loadPairs to be called too many times
++ figure out what's going on with the tagify error
+
+#### Enhancements: 
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
 + expansion of abbreviations and inventory enumeration:
   + will need to have each language's inventory (available in html but currently ignored)
@@ -42,6 +55,3 @@ $database = (isset($database) ? $database : "diachron");
   + sql injection prevention / input sanitization
   + regular backups of data, data approval
   + view and edit modes
-
-#### Known Bugs:
-+ opening and closing the modal causes loadPairs to be called too many times
