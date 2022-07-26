@@ -35,14 +35,25 @@
 <script src="https://cytoscape.org/cytoscape.js-euler/cytoscape-euler.js"></script>
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/demo/forTestingCose/cytoscape-cosep-port.js"></script>
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/cytoscape-cosep.js"></script>
-<script src='utils.js'></script>
+<script src='js/utils.js'></script>
 <script type="module">
+let url = 'mysql.php';
 function populateSelect(id, options) {
     let $select = $(`#${id}`)
-    Object.entries(options).forEach(function(entry) {
+    options.forEach(function(entry) {
         let [key, val] = entry;
         $select.append(`<option>${val}</option>`);
     });
+}
+async function $get(url, data) {
+    let result = false;
+    try {
+        result = await $.get(url, data);
+    }
+    catch(e) {
+        console.error(e);
+    }
+    return result;
 }
 async function $getJSON(url, data) {
     let result = false;
@@ -57,32 +68,31 @@ async function $getJSON(url, data) {
 function get() {
     let qs = document.location.search;
     qs = qs.split('+').join(' ');
-    let params = {},
-        tokens,
-        re = /[?&]?([^=]+)=([^&]*)/g;
+    let params = {}, tokens, re = /[?&]?([^=]+)=([^&]*)/g;
     while (tokens = re.exec(qs)) {
         params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
     }
     return params;
 }
 async function loadLanguages() {
-    let languages = await $getJSON(`mysql.php`, {mode: 'list', table: 'languages'});
+    let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
+    languages = languages.map(language => {
+        return [language.id, language.value];
+    });
     populateSelect(`languages`, languages);
     let language = get()?.language;
-    if (language) {
-        $("#languages").val(language)
-    }
+    if (language) $("#languages").val(language)
 }
 async function loadLanguageData(language) {
-    let headers = {query: $("#query").val(), language: language};
-    let data = await $getJSON(`graph.php`, headers);
+    let headers = {mode: "graph", query: $("#query").val(), language: language};
+    let data = await $getJSON(url, headers);
     return data;
 }
 async function doStuff() {
     await loadLanguages();
     let language = $("#languages").val();
     let languageData = await loadLanguageData(language);
-    let cy = cytoscape({
+    let data = {
         container: document.getElementById('cy'),
         elements: languageData,
         selectionType: 'single',
@@ -106,33 +116,25 @@ async function doStuff() {
                 'curve-style': 'bezier'
             }
         }],
-    });
-    $("#languages, #query, #layout").change(async function() {
-        let language = $("#languages").val();
-        let languageData = await loadLanguageData(language);
-        cy = cytoscape({
-            container: document.getElementById('cy'),
-            elements: languageData,
-            selectionType: 'single',
-            layout: {
-                name: $("#layout").val()
-            },
-            style: [{
-                selector: 'node',
-                style: {
-                    'label': 'data(id)'
-                }
-            },{
-                selector: 'edge',
-                style: {
-                    'width': 1,
-                    'target-arrow-shape': 'triangle',
-                    'curve-style': 'bezier'
-                }
-            }],
-        });
+    };
+    let cy = cytoscape(data);
+    $("#languages, #query").change(async function() {
+        language = $("#languages").val();
+        languageData = await loadLanguageData(language);
+        data.elements = languageData;
+        cy = cytoscape(data);
     });
     $("#layout").change(function() {
+        if ($(this).val() === "avsdf") {
+            let layout = cy.layout({
+                name: $(this).val(),
+                nodeDimensionsIncludeLabels: true,
+                fit: true,
+                padding: 20,
+            });
+            layout.run();  
+            return;   
+        }
         let layout = cy.layout({
             name: $(this).val(),
             animate: true,
@@ -191,7 +193,7 @@ $(function() {
         <option>cose</option>
         <option>cosep</option>
         <option>cola</option>
-        <option>cise</option>
+        <!-- <option>cise</option> -->
         <option>euler</option>
         <option>spread</option>
     </optgroup>

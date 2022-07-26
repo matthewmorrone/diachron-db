@@ -272,7 +272,6 @@ function process_rules($resultRules) {
     return $resultRules;
 }
 foreach ($sections as $key=>$section) {
-    if ($key < 6) continue;
     $transition = $section->getElementsByTagName('h2')->item(0)->textContent;
     $transition = fix_encoding($transition);
 
@@ -295,6 +294,7 @@ foreach ($sections as $key=>$section) {
             "key" => $key,
             "family" => $family,
             "citation" => $section->getElementsByTagName('p')->item(0)->nodeValue,
+            "notes" => $section->getElementsByTagName('span')->item(0)->nodeValue,
             "segments" => $segmentData
         ];
         $results[] = $result;
@@ -404,17 +404,22 @@ foreach ($sections as $key=>$section) {
 
     $results[] = $result;
 }
-// echo json_encode($results);
-
 
 function database($results) {
-
+    GLOBAL $debug;
+    $debug = true;
     reset_database();
     foreach($results as $result) {
         $source_language_id = get_or_add_language($result["source_language"]);
         $target_language_id = get_or_add_language($result["target_language"]);
         $citation = $result["citation"];
         get_or_add_transition($source_language_id, $target_language_id, $citation);
+    }
+    foreach($results as $result) {
+        $segments = $result["segments"];
+        if (!$segments) continue;
+        $family = $result["family"];
+        add_inventory($family, $segments);
     }
     foreach($results as $result) {
         foreach($result["rules"] as $rule) {
@@ -437,6 +442,7 @@ function database($results) {
 }
 
 database($results);
+echo json_encode($results);
 
 set_time_limit(120);
 ?>

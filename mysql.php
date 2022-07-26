@@ -20,6 +20,18 @@ if ($_GET) {
             $query = "SHOW TABLES FROM $database";
             echo json_encode(get_tables());
         break;
+        case "graph":
+            $language_id = get_language($language)[0]["id"];
+            switch($query) {
+                case "parent": echo json_encode(get_data(get_structure(get_parent($language)))); break;
+                case "structure": echo json_encode(get_data(get_structure($language))); break;
+                case "ancestors": echo json_encode(get_data(get_structure(get_ancestors($language)))); break;
+                case "children": echo json_encode(get_data(get_structure(get_children($language)))); break;
+                case "descendants": echo json_encode(get_data(get_structure(get_descendants($language)))); break;
+                case "family": echo json_encode(get_data(get_structure(get_family($language)))); break;
+                case "structure_all": echo json_encode(get_data(get_structure_all($language))); break;
+            }            
+        break;
         case "list":
             switch($table) {
                 case "pairs":
@@ -132,13 +144,14 @@ function history($output) {
     file_put_contents("history.log", "$timestamp\t$output\n", FILE_APPEND);
 }
 function do_query($query) {
-    GLOBAL $mysqli;
+    GLOBAL $mysqli, $debug;
+    if ($debug) echo "$query<br>"; 
     history($query);
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
 }
 function get_query($query) {
-    GLOBAL $mysqli;
+    GLOBAL $mysqli, $debug;
     history($query);
     $result = $mysqli->query($query) or die($mysqli->error);
     while($row = $result->fetch_assoc()) $results[] = $row;
@@ -155,9 +168,171 @@ function reset_database() {
     do_query($query);
     $query = "TRUNCATE languages";
     do_query($query);
+    $query = "TRUNCATE languages_segments";
+    do_query($query);
     $query = "SET FOREIGN_KEY_CHECKS = 1";
     do_query($query);
 }
+
+function get_parent($language) {
+    $query = "SELECT
+    source_language.value AS source
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE target_language.value = '".$language."'";
+    $language = get_query($query);
+    if (!$language) return -1;
+    return $language[0]["source"];
+}
+function get_ancestors($language, $inclusive=false) {
+    $ancestors = [];
+    $parent = $language;
+    if ($inclusive) $ancestors[] = $parent;
+    while ($parent !== -1) {
+        $parent = get_parent($parent);
+        if ($parent !== -1) $ancestors[] = $parent;
+    }
+    return array_reverse($ancestors);
+}
+function get_ancestor_tree($language, $lookup=false) {
+    $ancestors = [];
+    $parent = $language;
+    while ($parent !== -1) {
+        $grandparent = get_parent($parent);
+        if ($grandparent !== -1) {
+            $transition = [$grandparent, $parent];
+            if ($lookup) {
+                $source = get_language($grandparent)[0]["id"];
+                $target = get_language($parent)[0]["id"];
+                $transition["transition"] = get_transition($source, $target)[0]["id"];
+            }
+            $ancestors[] = $transition;
+        }
+        $parent = $grandparent;
+    }
+    return array_reverse($ancestors);
+}
+function get_children($languages) {
+    if (!is_array($languages)) $languages = [$languages];
+    $languages = implode("','", $languages);
+    $query = "SELECT
+    target_language.value AS target
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE source_language.value IN ('".$languages."')";
+    $languages = get_query($query);
+    if (!$languages) return [];
+    $languages = array_map(function($language) {
+        return $language["target"];
+    }, $languages);
+    return $languages;
+}
+function get_descendants($language) {
+    $count = [];
+    $languages = [$language];
+    while (empty($count[count($count)-2]) or $count[count($count)-2] !== $count[count($count)-1]) {
+        $languages = implode("','", $languages);
+        $query = "SELECT
+    target_language.value AS target
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE source_language.value IN ('".$languages."')
+    OR    target_language.value IN ('".$languages."')";
+        $family = get_query($query);
+        foreach($family as $branch) {
+            $result[] = $branch["target"];
+        }
+        $languages = array_unique($result);
+        $count[] = count($languages);
+    }
+    if (($key = array_search($language, $languages)) !== false) {
+        unset($languages[$key]);
+    }
+    return $languages;
+}
+function get_family($language) {
+    $count = [];
+    $languages = [$language];
+    while (empty($count[count($count)-2]) or $count[count($count)-2] !== $count[count($count)-1]) {
+        $languages = implode("','", $languages);
+        $query = "SELECT
+    source_language.value AS source,
+    target_language.value AS target
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE source_language.value IN ('".$languages."')
+    OR    target_language.value IN ('".$languages."')";
+        $family = get_query($query);
+        foreach($family as $branch) {
+            $result[] = $branch["source"];
+            $result[] = $branch["target"];
+        }
+        $languages = array_unique($result);
+        $count[] = count($languages);
+    }
+    return $languages;
+}
+function get_structure($languages) {
+    if (!is_array($languages)) $languages = [$languages];
+    $languages = implode("','", $languages);
+    $query = "SELECT
+    source_language.value AS source,
+    target_language.value AS target
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE source_language.value IN ('".$languages."')
+    OR    target_language.value IN ('".$languages."')";
+    return get_query($query);
+}
+function get_structure_all($language) {
+    $family = get_family($language);
+    $languages = implode("','", $family);
+    $query = "SELECT
+    source_language.value AS source,
+    target_language.value AS target
+    FROM transitions
+    INNER JOIN languages AS source_language
+    INNER JOIN languages AS target_language
+    ON  transitions.source_language_id = source_language.id
+    AND transitions.target_language_id = target_language.id
+    WHERE source_language.value IN ('".$languages."')
+    OR    target_language.value IN ('".$languages."')";
+    $family = get_query($query);
+    return $family;
+}
+function get_data($pairs) {
+    $result = [];
+    foreach($pairs as $pair) {
+        $result[] = $pair["source"];
+        $result[] = $pair["target"];
+    }
+    $result = array_unique($result);
+    $result = array_values($result);
+    $result = array_map(function($a) {
+        return ["data" => ["id" => $a]];
+    }, $result);
+    foreach($pairs as $pair) {
+        $result[] = ["data" => $pair]; 
+    }
+    return $result;
+}
+
+
 function count_tables() {
     GLOBAL $database;
     $query = "SHOW TABLES FROM $database;";
@@ -219,6 +394,30 @@ $query .= " ORDER BY transition";
     history($query);
     return get_query($query);
 }
+function get_pairs_by_transition_id($transition_id, $limit=0) {
+    $query = "SELECT pairs.id AS id,
+source_segment.value AS source_segment,
+target_segment.value AS target_segment,
+CONCAT(source_language.value, ' → ', target_language.value) AS transition,
+pairs.environment,
+pairs.notes
+FROM pairs
+INNER JOIN segments AS source_segment
+INNER JOIN segments AS target_segment
+INNER JOIN transitions
+INNER JOIN languages AS source_language
+INNER JOIN languages AS target_language
+ON pairs.source_segment_id = source_segment.id
+AND pairs.target_segment_id = target_segment.id
+AND pairs.transition_id = transitions.id
+AND transitions.source_language_id = source_language.id
+AND transitions.target_language_id = target_language.id
+WHERE transitions.id = '$transition_id'
+ORDER BY transition
+";
+    if ($limit) $query .= " LIMIT $limit";
+    return get_query($query);
+}
 function get_pairs_by_transition($transition, $limit=0) {
     $query = "SELECT pairs.id AS id,
 source_segment.value AS source_segment,
@@ -264,6 +463,24 @@ AND transitions.target_language_id = target_language.id
 ORDER BY transition";
     if ($limit) $query .= " LIMIT $limit";
     return get_query($query);
+}
+function add_inventory($family, $segments) {
+    $family_id = get_or_add_language($family);
+    $segments = array_unique($segments);
+    foreach($segments as $segment) {
+        $segment_id = get_or_add_segment($segment);
+        $query = "INSERT INTO languages_segments (language_id, segment_id) VALUES ('$family_id', '$segment_id')";
+        do_query($query);
+    }
+}
+function get_inventory($language_id) {
+    $query = "SELECT * FROM languages_segments 
+    INNER JOIN segments
+    ON languages_segments.segment_id = segments.id
+    WHERE language_id = '$language_id'";
+    return array_map(function($segment) {
+        return $segment["value"];
+    }, get_query($query));
 }
 function get_segments($limit=0) {
     $query = "SELECT id, value FROM segments ORDER BY value";
@@ -469,8 +686,8 @@ function remove_transition($id) {
 function printr() {
     foreach (func_get_args() as $i) {
         if (is_array($i) || is_object($i)) {echo "<pre>";  print_r($i); echo "</pre>";}
-        else {print_r($i);}
-        echo "\n<br>";
+        else {print_r($i); echo "\t";}
     }
+    echo "\n<br>";
 }
 ?>

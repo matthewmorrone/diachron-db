@@ -32,6 +32,7 @@ $database = (isset($database) ? $database : "diachron");
   + include segments in source column of rules
 + create look up table that returns all phones of a given abbreviation
   + then filter for only those that belong to a specific language
++ languages and transitions need both citation and notes fields
 
 #### Refactoring:
 + switch all php functions to accepting $data
@@ -39,6 +40,7 @@ $database = (isset($database) ? $database : "diachron");
 
 #### Known Bugs:
 + opening and closing the modal causes loadPairs to be called too many times
++ notes about languages currently tossed out: need to aggregate tags
 + figure out what's going on with the tagify error
 
 #### Enhancements: 
