@@ -33,23 +33,23 @@ $database = (isset($database) ? $database : "diachron");
 + figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
 
 #### Enhancements: 
-+ sql injection prevention / input sanitization
-+ regular backups of data, data approval
 + view and edit modes
 + integrate graphs into data interface
 + graph that shows all pairs for a specific transition
-+ editing nodes and vertices updates database?
-+ for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
-+ add depth option (will definitely need a circularity check, see segment "an")
-+ edit inventories through data interface
-+ calculate inventories from ancestral inventory and rules through data interface
-+ draggable columns, if saveable to localStorage even better
++ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 + option to toggle between showing transition and source language → target language
 + split log into queries and inserts/updates/deletes
 + download options for json, sql, csv (zipped if several files)
++ add depth option (will definitely need a circularity check, see segment "an")
++ for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
++ calculate inventories from ancestral inventory and rules through data interface
++ sql injection prevention / input sanitization
++ regular backups of data, data approval
++ editing nodes and vertices updates database?
++ edit inventories through data interface
++ draggable columns, if saveable to localStorage even better
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
-+ store segments parsed from index diachronica in database
-  + include segments in source column of rules
++ when calculating an inventory, include segments in source column of rules
 + expansion of abbreviations and inventory enumeration:
   + will need to have each language's inventory (available in html but currently ignored)
   + add data to database which contains every phone that belongs to a language
@@ -62,5 +62,4 @@ $database = (isset($database) ? $database : "diachron");
   + then filter for only those that belong to a specific language
 + languages and transitions need both citation and notes fields
 + consider having separate phone table rather than just segment table
-+ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 
