@@ -31,20 +31,20 @@ foreach($languages as $language) {
         $pairs = get_pairs_by_transition_id($ancestor["transition"]);
         $ancestor["oldInventory"] = implode(",", $inventory);
         foreach($pairs as $pair) {
-            echo $pair["source_segment"] . " → " . $pair["target_segment"] . " / " . $pair["environment"]."<br>";
-
+            
             $index = array_search($pair["source_segment"], $inventory);
             if ($index) {
+                echo $pair["source_segment"] . " → " . $pair["target_segment"] . " / " . $pair["environment"]."<br>";
                 echo implode(",", $inventory)."<br>";
                 $inventory = insertArrayAtPosition($inventory, $pair["target_segment"], $index);
                 echo implode(",", $inventory)."<br>";
             }
         }
         foreach($pairs as $pair) {
-            echo $pair["source_segment"] . " → " . $pair["target_segment"] . " / " . $pair["environment"]."<br>";
-
+            
             $index = array_search($pair["source_segment"], $inventory);
             if ($index) {
+                echo $pair["source_segment"] . " → " . $pair["target_segment"] . " / " . $pair["environment"]."<br>";
                 echo implode(",", $inventory)."<br>";
                 if (!$pair["environment"]) {
                     unset($inventory[$index]);

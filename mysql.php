@@ -21,16 +21,28 @@ if ($_GET) {
             echo json_encode(get_tables());
         break;
         case "graph":
-            $language_id = get_language($language)[0]["id"];
-            switch($query) {
-                case "parent": echo json_encode(get_data(get_structure(get_parent($language)))); break;
-                case "structure": echo json_encode(get_data(get_structure($language))); break;
-                case "ancestors": echo json_encode(get_data(get_structure(get_ancestors($language)))); break;
-                case "children": echo json_encode(get_data(get_structure(get_children($language)))); break;
-                case "descendants": echo json_encode(get_data(get_structure(get_descendants($language)))); break;
-                case "family": echo json_encode(get_data(get_structure(get_family($language)))); break;
-                case "structure_all": echo json_encode(get_data(get_structure_all($language))); break;
-            }            
+            switch($type) {
+                case "language":
+                    $language_id = get_language($language)[0]["id"];
+                    switch($query) {
+                        case "parent": echo json_encode(get_data(get_structure(get_parent($language)))); break;
+                        case "structure": echo json_encode(get_data(get_structure($language))); break;
+                        case "ancestors": echo json_encode(get_data(get_structure(get_ancestors($language)))); break;
+                        case "children": echo json_encode(get_data(get_structure(get_children($language)))); break;
+                        case "descendants": echo json_encode(get_data(get_structure(get_descendants($language)))); break;
+                        case "family": echo json_encode(get_data(get_structure(get_family($language)))); break;
+                        case "structure_all": echo json_encode(get_data(get_structure_all($language))); break;
+                    }
+                break;
+                case 'segment':
+                    $data = [
+                        "source_segment" => $segment,
+                        "target_segment" => $segment,
+                    ];
+                    $pairs = query_pairs($data);
+                    echo json_encode(generate_segment_data($pairs));
+                break;
+            }
         break;
         case "list":
             switch($table) {
@@ -145,7 +157,7 @@ function history($output) {
 }
 function do_query($query) {
     GLOBAL $mysqli, $debug;
-    if ($debug) echo "$query<br>"; 
+    if ($debug) echo "$query<br>";
     history($query);
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
@@ -173,7 +185,32 @@ function reset_database() {
     $query = "SET FOREIGN_KEY_CHECKS = 1";
     do_query($query);
 }
-
+function generate_segment_data($pairs) {
+    $result = [];
+    foreach($pairs as $pair) {
+        $result[] = $pair["source_segment"];
+        $result[] = $pair["target_segment"];
+    }
+    $result = array_unique($result);
+    $result = array_values($result);
+    $result = array_map(function($a) {
+        return ["data" => ["id" => $a, "label" => $a]];
+    }, $result);
+    foreach($pairs as $pair) {
+        if (strcmp($pair["source_segment"], $pair["target_segment"]) === 0) continue;
+        $transition = explode(" → ", $pair["transition"]);
+        $source_label = $transition[0];
+        $target_label = $transition[1];
+        $result[] = ["data" => [
+            "source" => $pair["source_segment"],
+            "target" => $pair["target_segment"],
+            "transition" => $pair["transition"],
+            "source_language" => $source_label,
+            "target_language" => $target_label,
+        ]]; 
+    }
+    return $result;
+}
 function get_parent($language) {
     $query = "SELECT
     source_language.value AS source
@@ -327,7 +364,7 @@ function get_data($pairs) {
         return ["data" => ["id" => $a]];
     }, $result);
     foreach($pairs as $pair) {
-        $result[] = ["data" => $pair]; 
+        $result[] = ["data" => $pair];
     }
     return $result;
 }
@@ -387,8 +424,11 @@ AND pairs.target_segment_id = target_segment.id
 AND pairs.transition_id = transitions.id
 AND transitions.source_language_id = source_language.id
 AND transitions.target_language_id = target_language.id";
-if ($source_segment) $query .= " AND source_segment.value = '$source_segment'";
-if ($target_segment) $query .= " AND target_segment.value = '$target_segment'";
+if ($source_segment and $target_segment) {
+    $query .= " AND (source_segment.value = '$source_segment' OR target_segment.value = '$target_segment')";
+}
+else if ($source_segment) $query .= " AND source_segment.value = '$source_segment'";
+else if ($target_segment) $query .= " AND target_segment.value = '$target_segment'";
 if ($transition) $query .= " HAVING transition = '$transition'";
 $query .= " ORDER BY transition";
     history($query);
@@ -474,7 +514,7 @@ function add_inventory($family, $segments) {
     }
 }
 function get_inventory($language_id) {
-    $query = "SELECT * FROM languages_segments 
+    $query = "SELECT * FROM languages_segments
     INNER JOIN segments
     ON languages_segments.segment_id = segments.id
     WHERE language_id = '$language_id'";

@@ -276,7 +276,8 @@ async function loadPairs(transition) {
     }
     let $table = $("#pairs tbody");
     $table.empty();
-    if (!headers.data.transition) return;
+    if (!headers.data.source_segment && !headers.data.target_segment && !headers.data.transition) return;
+    
     let rows = await $getJSON(url, headers);
     if (!rows) return;
     console.log(rows.size()+" rows loaded")

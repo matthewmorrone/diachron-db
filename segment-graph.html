@@ -13,8 +13,6 @@
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-avsdf/cytoscape-avsdf.js"></script>
 <script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
 <script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
-<!-- <script src="https://cdn.jsdelivr.net/npm/elkjs@0.7.0/lib/elk.bundled.js"></script> -->
-<!-- <script src="https://cytoscape.org/cytoscape.js-elk/cytoscape-elk.js"></script> -->
 <script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
 <script src="https://cytoscape.org/cytoscape.js-klay/cytoscape-klay.js"></script>
 <script src="https://unpkg.com/layout-base/layout-base.js"></script>
@@ -45,16 +43,6 @@ function populateSelect(id, options) {
         $select.append(`<option>${val}</option>`);
     });
 }
-async function $get(url, data) {
-    let result = false;
-    try {
-        result = await $.get(url, data);
-    }
-    catch(e) {
-        console.error(e);
-    }
-    return result;
-}
 async function $getJSON(url, data) {
     let result = false;
     try {
@@ -74,61 +62,90 @@ function get() {
     }
     return params;
 }
-async function loadLanguages() {
-    let languages = await $getJSON(url, {mode: 'list', table: 'languages'});
-    languages = languages.map(language => {
-        return [language.id, language.value];
+async function loadSegments() {
+    let headers = {mode: 'list', table: 'segments'};
+    let segments = await $getJSON(url, headers);
+    segments = segments.map(segment => {
+        return [segment.id, segment.value];
     });
-    populateSelect(`languages`, languages);
-    let language = get()?.language;
-    if (language) $("#languages").val(language)
+    populateSelect(`segments`, segments);
+    let segment = get()?.segment;
+    if (segment) $("#segments").val(segment)
 }
-async function loadLanguageData(language) {
-    let headers = {mode: "graph", type: "language", query: $("#query").val(), language: language};
+async function loadSegmentData(segment) {
+    segment = segment || $("#segments").val();
+    let headers = {mode: 'graph', type: 'segment', segment: segment};
     let data = await $getJSON(url, headers);
     return data;
 }
+function cytoscapeFunctionality(cy) {
+    cy.on('click', 'node', async function() {
+        let segment = this.id();
+        $("#segments").val(segment).trigger("change");
+    });
+}
 async function doStuff() {
-    await loadLanguages();
-    let language = $("#languages").val();
-    let languageData = await loadLanguageData(language);
+    await loadSegments();
+    let segment = $("#segments").val();
+    let segmentData = await loadSegmentData(segment);
+    console.log(segmentData)
+    console.log(`layout: ${$("#layout").val()}`)
     let data = {
         container: document.getElementById('cy'),
-        elements: languageData,
-        wheelSensitivity: 0.2,
+        elements: segmentData,
         selectionType: 'single',
+        wheelSensitivity: 0.2,
         layout: {
             name: $("#layout").val(),
             animate: true,
             nodeDimensionsIncludeLabels: true,
             fit: true,
-            padding: 50,
+            padding: 5,
         },
         style: [{
             selector: 'node',
             style: {
-                'label': 'data(id)'
+                'label': 'data(id)',
+                "text-valign" : "center",
+                "text-halign" : "center"
+            }
+        }, {
+            selector: 'edge',
+            style: {
+                'label': 'data(transition)',
+                "text-rotation": "autorotate",
             }
         },{
             selector: 'edge',
             style: {
                 'width': 1,
                 'target-arrow-shape': 'triangle',
-                'curve-style': 'bezier'
+                'curve-style': 'bezier',
             }
         }],
     };
     let cy = cytoscape(data);
-    $("#languages, #query").change(async function() {
-        language = $("#languages").val();
-        languageData = await loadLanguageData(language);
-        data.elements = languageData;
+    cytoscapeFunctionality(cy)
+    $("#segments").change(async function() {
+        segment = $("#segment").val();
+        segmentData = await loadSegmentData(segment);
+        data.elements = segmentData;
+        data.layout.name = $("#layout").val();
         cy = cytoscape(data);
+        cytoscapeFunctionality(cy);
+    });
+    $("#edge").change(function() {
+        console.log($(this).val())
+        cy.style().selector('edge').style({
+            'curve-style': $(this).val()
+        }).update();
     });
     $("#layout").change(function() {
-        if ($(this).val() === "avsdf") {
+        let layoutName = $(this).val();
+        console.log(`layout: ${$("#layout").val()}`)
+        if (layoutName === "avsdf") {
             let layout = cy.layout({
-                name: $(this).val(),
+                name: layoutName,
                 nodeDimensionsIncludeLabels: true,
                 fit: true,
                 padding: 20,
@@ -137,7 +154,7 @@ async function doStuff() {
             return;   
         }
         let layout = cy.layout({
-            name: $(this).val(),
+            name: layoutName,
             animate: true,
             nodeDimensionsIncludeLabels: true,
             fit: true,
@@ -164,29 +181,30 @@ $(function() {
 </style>
 </head>
 <body>
-<select id="languages"></select>
-<select id="query">
-    <option>family</option>
-    <option>structure</option>
-    <option>structure_all</option>
-    <option>parent</option>
-    <option>ancestors</option>
-    <option>children</option>
-    <option>descendants</option>
+<select id="segments"></select>
+<select id="edge">
+    <option>bezier</option>
+    <option>unbundled-bezier</option>
+    <option>unbundled-bezier(multiple)</option>
+    <option>straight</option>
+    <option>haystack</option>
+    <option>segments</option>
+    <option>taxi</option>
+    <option>loop</option>
+    <option>straight-triangle</option>
 </select>
 <select id="layout">
     <option>random</option>
     <optgroup label="Geometric">
         <option>grid</option>
-        <option>circle</option>
+        <option selected>circle</option>
         <option>concentric</option>
         <option>avsdf</option>
     </optgroup>
     <optgroup label="Hierarchical">
         <option>dagre</option>
         <option>breadthfirst</option>
-        <!-- <option>elk</option> -->
-        <option selected>klay</option>
+        <option>klay</option>
     </optgroup>
     <optgroup label="Force-directed">
         <option>fcose</option>
@@ -194,7 +212,6 @@ $(function() {
         <option>cose</option>
         <option>cosep</option>
         <option>cola</option>
-        <!-- <option>cise</option> -->
         <option>euler</option>
         <option>spread</option>
     </optgroup>
