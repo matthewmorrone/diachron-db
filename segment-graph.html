@@ -155,6 +155,7 @@ async function doStuff() {
         }
         let layout = cy.layout({
             name: layoutName,
+            avoidOverlap: true,
             animate: true,
             nodeDimensionsIncludeLabels: true,
             fit: true,
