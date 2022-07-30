@@ -19,18 +19,14 @@ $database = (isset($database) ? $database : "diachron");
 + Navigate to <code>localhost/diachron-db</code> in your browser
 
 #### Uses:
-+ [Index Diachronica](https://chridd.nfshost.com/diachronica/all)
++ Data comes from [Index Diachronica](https://chridd.nfshost.com/diachronica/all)
 + [Bootstrap 5](https://getbootstrap.com/)
 + [tagify](https://yaireo.github.io/tagify/)
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 + [cytoscape.js](https://js.cytoscape.org/)
 
 #### Refactoring:
-+ switch all php functions to accepting $data
 + when modifying something and that something already exists, merge rather than reject
-
-#### Known Bugs:
-+ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
 
 #### Enhancements: 
 + view and edit modes
@@ -62,4 +58,7 @@ $database = (isset($database) ? $database : "diachron");
   + then filter for only those that belong to a specific language
 + languages and transitions need both citation and notes fields
 + consider having separate phone table rather than just segment table
+
+#### Known Bugs:
++ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
 

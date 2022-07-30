@@ -96,8 +96,8 @@ $.fn.selectOption = function(text) {
 function jsonToSelect(options, id) {
     let result = `<select id='${id}'>`;
         result += `<option></option>`;
-    Object.entries(options).forEach(function(entry) {
-        let [key, val] = entry;
+    options.forEach(function(option) {
+        let [key, val] = option;
         result += `<option value='${key}'>${val}</option>`;
     });
     result += '</select>';
@@ -105,8 +105,8 @@ function jsonToSelect(options, id) {
 }
 function jsonToOptions(options, id) {
     let result = `<option></option>`;
-    options.forEach(function(entry) {
-        let [key, val] = entry;
+    options.forEach(function(option) {
+        let [key, val] = option;
         result += `<option value='${key}'>${val}</option>`;
     });
     return result;
@@ -114,8 +114,8 @@ function jsonToOptions(options, id) {
 function jsonToDataList(options, id) {
     let result = `<input type=text name=${id} list=${id} />`;
         result += `<datalist id='${id}'>`;
-    Object.entries(options).forEach(function(entry) {
-        let [key, val] = entry;
+    options.forEach(function(option) {
+        let [key, val] = option;
         result += `<option data-id='${key}'>${val}</option>`;
     });
     result += '</datalist>';
@@ -123,8 +123,8 @@ function jsonToDataList(options, id) {
 }
 function jsonToTableRow(data, id) {
     let result = `<tr ${id}='${data['id']}'>`;
-    for(let key in data) {
-        if(key === 'id') continue;
+    for (let key in data) {
+        if (key === 'id') continue;
         result += `<td class=${key}>${data[key]}</td>`;
     }
     result += `<td class='submit'><button class='ex' data-bs-id="${data['id']}"></button></td>`;
@@ -136,18 +136,18 @@ function jsonToTable(data, id) {
     result += `<table class="table" id='${id}'>`;
     result += `<thead>`;
     result += `<tr>`;
-    for(let key in data[0]) {
-        if(key === 'id') continue;
+    for (let key in data[0]) {
+        if (key === 'id') continue;
         result += `<th class='sort'>${key.replace(/_/g, ' ').toTitleCase()}</th>`;
     }
     result += `<th class='submit'></th>`;
     result += `</tr>`;
     result += `</thead>`;
     result += `<tbody>`;
-    for(let  i = 0; i < data.length; i++) {
+    for (let  i = 0; i < data.length; i++) {
         result += `<tr ${id.slice(0, id.length-1)}='${data[i]['id']}'>`;
-        for(let key in data[i]) {
-            if(key === 'id') continue;
+        for (let key in data[i]) {
+            if (key === 'id') continue;
             result += `<td class=${key}>${data[i][key]}</td>`;
         }
         result += `<td class='submit'><button class='ex' data-bs-id="${data[i]['id']}"></button></td>`;
@@ -167,7 +167,8 @@ function download(filename, text) {
     document.body.removeChild(element);
 }
 async function exportData() {
-    let data = await $getJSON(url, {mode: 'dump'});
+    let headers = {mode: 'dump'};
+    let data = await $getJSON(url, headers);
     download("diachron.json", JSON.stringify(data));
 }
 
@@ -226,7 +227,7 @@ async function submitPair() {
     else return;
     let [source_language, target_language] = transition;
 
-    let submit = {
+    let headers = {
         mode: 'insert',
         table: 'pair',
         output: true,
@@ -239,21 +240,20 @@ async function submitPair() {
             notes: $('.submit .notes input').val(),
         }
     };
-    console.log(submit)
-    if(!submit.data.source_segment
-    || !submit.data.target_segment
-    || !submit.data.source_language
-    || !submit.data.target_language
+    if (!headers.data.source_segment
+    ||  !headers.data.target_segment
+    ||  !headers.data.source_language
+    ||  !headers.data.target_language
     ) {
         return;
     }
-    let result = await $get(url, submit);
+    let result = await $get(url, headers);
     if (result) {
         await loadPairs();
     }
 }
 async function submitTransition() {
-    let submit = {
+    let headers = {
         mode: 'insert',
         table: 'transition',
         data: {
@@ -262,8 +262,8 @@ async function submitTransition() {
             citation: $('#transition .citation input').val(),
         }
     };
-    if(!submit.data.source_language || !submit.data.target_language) return;
-    let result = await $get(url, submit);
+    if (!headers.data.source_language || !headers.data.target_language) return;
+    let result = await $get(url, headers);
     if (result) $("#transitions").click()
 }
 
@@ -290,7 +290,6 @@ async function loadPairs(transition) {
     let rows = await $getJSON(url, headers);
     if (!rows) return;
     console.log(rows.size()+" rows loaded")
-
 
     rows && rows.forEach(function(row) {
         let $tableRow = $(jsonToTableRow(row, "pair"));
@@ -334,9 +333,7 @@ async function loadPairs(transition) {
                     notes: $tr.find('.notes').text(),
                 };
 
-                console.log(headers.data);
                 let result = await $get(url, headers);
-                console.log(result);
                 if (result) loadPairs();
             }
         });
@@ -347,14 +344,16 @@ async function loadPairs(transition) {
 }
 
 async function loadData() {
-    let segments = await $getJSON(url, {mode: 'list', table: 'segments'});
+    let headers = {mode: 'list', table: 'segments'};
+    let segments = await $getJSON(url, headers);
     segments = segments.map(segment => {
         return [segment.id, segment.value];
     });
     $(".search .source_segment select").html(jsonToOptions(segments));
     $(".search .target_segment select").html(jsonToOptions(segments));
 
-    let transitions = await $getJSON(url, {mode: 'list', table: 'transitions'});
+    headers = {mode: 'list', table: 'transitions'};
+    let transitions = await $getJSON(url, headers);
     transitions = transitions.map(transition => {
         return [transition.id, transition.transition];
     });
@@ -396,10 +395,8 @@ function modalFunctionality() {
         let button = e.target;
         let id = button.getAttribute('data-bs-id');
 
-        let headers = {mode: "remove", table: "pair", id: id};
-
+        let headers = {mode: "remove", table: "pair", data: {id: id}};
         let result = await $get(url, headers);
-        console.log(result)
 
         if (result) loadPairs();
     });
@@ -411,29 +408,49 @@ function modalFunctionality() {
         let table = $(this).text();
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries = await $getJSON(url, {mode: "list", table: table});
+        let headers = {mode: "list", table: table};
+        let entries = await $getJSON(url, headers);
         entries = JSON.stringify(entries).escapeHTML();
-        console.log(entries)
         $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
         table = table.slice(0, table.length-1);
         let tagInput = document.querySelector('#tags');
         let tagify = new Tagify(tagInput, {hooks: {
             beforeRemoveTag: function(tags) {
                 return new Promise(async function(resolve, reject) {
-                    let headers = {mode: "remove", table: table, id: tags[0].data.id};
+                    let headers = {
+                        mode: "remove", 
+                        table: table, 
+                        data: {
+                            id: tags[0].data.id,
+                        }
+                    };
                     let response = await $get(url, headers);
                     !response.includes(`Fatal error`) ? resolve() : reject()
                 })
             }
         }});
         tagify.on('add', async function(e) {
-            await $get(url, {mode: "insert", table: table, value: e.detail.data.value});
+            let headers = {
+                mode: "insert", 
+                table: table, 
+                data: {
+                    value: e.detail.data.value,
+                }
+            };
+            await $get(url, headers);
         }).on('edit:updated', async function(e) {
-            await $get(url, {mode: "update", table: table, id: e.detail.data.id, value: e.detail.data.value});
+            let headers = {
+                mode: "update", 
+                table: table, 
+                data: {
+                    id: e.detail.data.id, 
+                    value: e.detail.data.value,
+                }
+            };
+            await $get(url, hedaers);
         });
 
         $modal.on('hide.bs.modal', function(e) {
-            console.count();
             loadPairs();
         });
     });
@@ -445,7 +462,8 @@ function modalFunctionality() {
         let table = $(this).text();
         $(`${modal} .modal-title`).text(table);
         table = table.toLowerCase();
-        let entries = await $getJSON(url, {mode: "list", table: table});
+        let headers = {mode: "list", table: table};
+        let entries = await $getJSON(url, headers);
         entries = entries.map(function(entry) {
             let [source, target] = entry.transition.split(" → ")
             return {
@@ -494,7 +512,6 @@ function modalFunctionality() {
             let $td = $(this);
             let text = $td.text();
             let $input = $(`<input class='edit' value='${text}' />`);
-            console.log($td, text, $input)
             $td.html($input);
             $input.select();
             $input.click(function(e) { return false; });
@@ -514,7 +531,6 @@ function modalFunctionality() {
                         citation: $tr.find('.citation').text() || newText,
                     };
                     let result = await $get(url, headers);
-                    console.log(result);
                     if (result) loadPairs();
                 }
             });
@@ -531,9 +547,8 @@ function modalFunctionality() {
         $('#transitions .ex').click(async function(e) {
             let button = e.target;
             let id = button.getAttribute('data-bs-id');
-            let headers = {mode: "remove", table: "transition", id: id};
+            let headers = {mode: "remove", table: "transition", data: {id: id}};
             let result = await $get(url, headers);
-            console.log(result);
             if (result) $("#transitions").click();
         });
 
@@ -631,7 +646,6 @@ $(function() {
         <button class="btn btn-primary" id="segmentsModal">Segments</button>
         <button class="btn btn-primary" id="languagesModal">Languages</button>
         <button class="btn btn-primary" id="transitionsModal">Transitions</button>
-        <!-- <button class="btn btn-primary" id="graph">Graph</button> -->
         <button class="btn btn-primary" id="about">About</button>
         <button class="btn btn-secondary" id="export">Export Data</button>
         <div class="simple-keyboard"></div>
@@ -677,6 +691,5 @@ $(function() {
 <link rel="import" href="modals/tags.html">
 <link rel="import" href="modals/error.html">
 <link rel="import" href="modals/about.html">
-<!-- <link rel="import" href="modals/graph.html"> -->
 </body>
 </html>

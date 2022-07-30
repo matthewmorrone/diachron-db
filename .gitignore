@@ -1,6 +1,5 @@
 credentials.txt
 settings.json
 node_modules
-history.log
-diachronica/history.log
+log
 parser

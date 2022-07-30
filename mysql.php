@@ -35,10 +35,7 @@ if ($_GET) {
                     }
                 break;
                 case 'segment':
-                    $data = [
-                        "source_segment" => $segment,
-                        "target_segment" => $segment,
-                    ];
+                    $data = ["source_segment" => $segment, "target_segment" => $segment];
                     $pairs = query_pairs($data);
                     echo json_encode(generate_segment_data($pairs));
                 break;
@@ -46,53 +43,42 @@ if ($_GET) {
         break;
         case "list":
             switch($table) {
-                case "pairs":
-                    echo json_encode(query_pairs($data));
-                    // $transition = $data["transition"];
-                    // if ($transition) echo json_encode(get_pairs_by_transition($transition, $limit));
-                    // else echo json_encode(get_pairs($limit));
-                break;
-                case "segments":    echo json_encode(get_segments($limit));    break;
-                case "languages":   echo json_encode(get_languages($limit));   break;
-                case "transitions": echo json_encode(get_transitions($limit)); break;
+                case "pairs":       echo json_encode(query_pairs($data));      break;
+                case "segments":    echo json_encode(get_segments($data));    break;
+                case "languages":   echo json_encode(get_languages($data));   break;
+                case "transitions": echo json_encode(get_transitions($data)); break;
             }
         break;
         case "insert":
             switch($table) {
-                case "pair":        echo add_pair($data);      break;
-                case "segment":     echo add_segment($value);  break;
-                case "language":    echo add_language($value); break;
-                case "transition":
-                    $source_language_id = get_or_add_language($data["source_language"]);
-                    $target_language_id = get_or_add_language($data["target_language"]);
-                    $citation = $data["citation"];
-                    echo get_or_add_transition($source_language_id, $target_language_id, $citation);
-                break;
+                case "pair":        echo add_pair($data);              break;
+                case "segment":     echo add_segment($data);           break;
+                case "language":    echo add_language($data);          break;
+                case "transition":  echo get_or_add_transition($data); break;
             }
         break;
         case "update":
             switch($table) {
-                case "pair":        echo update_pair($data);           break;
-                case "segment":     echo update_segment($id, $value);  break;
-                case "language":    echo update_language($id, $value); break;
-                case "transition":  echo update_transition($data);     break;
+                case "pair":        echo update_pair($data);       break;
+                case "segment":     echo update_segment($data);    break;
+                case "language":    echo update_language($data);   break;
+                case "transition":  echo update_transition($data); break;
             }
         break;
         case "remove":
             switch($table) {
-                case "pair":       echo remove_pair($id);       break;
-                case "segment":    echo remove_segment($id);    break;
-                case "language":   echo remove_language($id);   break;
-                case "transition": echo remove_transition($id); break;
+                case "pair":       echo remove_pair($data);       break;
+                case "segment":    echo remove_segment($data);    break;
+                case "language":   echo remove_language($data);   break;
+                case "transition": echo remove_transition($data); break;
             }
         break;
         case "test":
-            $source_segment = "q";
-            $target_segment = "k";
-            $source_language = "Old Turkic";
-            $target_language = "Turkish";
+            $source_segment = "e";
+            $target_segment = "i";
+            $source_language = "Proto-Indo-European";
+            $target_language = "Latin";
 
-            echo "<pre>";
 
             printr("count_tables: ", count_tables());
             printr("get_tables: ", json_encode(get_tables()));
@@ -100,25 +86,24 @@ if ($_GET) {
             printr("get_languages: ", count(get_languages()));
             printr("get_transitions: ", count(get_transitions()));
 
-            printr("check_segment $source_segment: ", check_segment($source_segment));
-            printr("get_segment $source_segment: ", get_segment($source_segment)[0]["id"]);
+            printr("check_segment $source_segment: ", check_segment(["value" => $source_segment]));
+            printr("get_segment $source_segment: ", get_segment(["value" => $source_segment])[0]["id"]);
+            
+            printr("check_segment $target_segment: ", check_segment(["value" => $target_segment]));
+            printr("get_segment $target_segment: ", get_segment(["value" => $target_segment])[0]["id"]);
 
-            printr("check_segment $target_segment: ", check_segment($target_segment));
-            printr("get_segment $target_segment: ", get_segment($target_segment)[0]["id"]);
-
-            printr("check_language $source_language: ", check_language($source_language));
-            $source_language_id = get_language($source_language)[0]["id"];
+            printr("check_language $source_language: ", check_language(["value" => $source_language]));
+            $source_language_id = get_language(["value" => $source_language])[0]["id"];
             printr("get_language $source_language: ", $source_language_id);
 
-            printr("check_language $target_language: ", check_language($target_language));
-            $target_language_id = get_language($target_language)[0]["id"];
+            printr("check_language $target_language: ", check_language(["value" => $target_language]));
+            $target_language_id = get_language(["value" => $target_language])[0]["id"];
             printr("get_language $target_language: ", $target_language_id);
 
-            printr("check_transition $source_language → $target_language: ", check_transition($source_language_id, $target_language_id));
-            $transition = get_transition($source_language_id, $target_language_id)[0];
+            printr("check_transition $source_language → $target_language: ", check_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]));
+            $transition = get_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id])[0];
             printr("get_transition $source_language → $target_language: ", $transition["id"]);
 
-            echo "</pre>";
         break;
         case "reset":
             reset_database();
@@ -150,24 +135,30 @@ function preg_replace_all($find, $repl, $text) {
     }
     return $text;
 }
-function history($output) {
+function log_reads($output) {
     $timestamp = date('Y/m/d H:i:s');
     $output = preg_replace("/[\s]+/", " ", $output);
-    file_put_contents("history.log", "$timestamp\t$output\n", FILE_APPEND);
+    file_put_contents("log/history-reads.log", "$timestamp\t$output\n", FILE_APPEND);
+}
+function log_writes($output) {
+    $timestamp = date('Y/m/d H:i:s');
+    $output = preg_replace("/[\s]+/", " ", $output);
+    file_put_contents("log/history-writes.log", "$timestamp\t$output\n", FILE_APPEND);
+}
+function get_query($query) {
+    GLOBAL $mysqli, $debug;
+    if ($debug) echo "$query<br>";
+    log_reads($query);
+    $result = $mysqli->query($query) or die($mysqli->error);
+    while($row = $result->fetch_assoc()) $results[] = $row;
+    return $results;
 }
 function do_query($query) {
     GLOBAL $mysqli, $debug;
     if ($debug) echo "$query<br>";
-    history($query);
+    log_writes($query);
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
-}
-function get_query($query) {
-    GLOBAL $mysqli, $debug;
-    history($query);
-    $result = $mysqli->query($query) or die($mysqli->error);
-    while($row = $result->fetch_assoc()) $results[] = $row;
-    return $results;
 }
 function reset_database() {
     $query = "SET FOREIGN_KEY_CHECKS = 0";
@@ -368,8 +359,24 @@ function get_data($pairs) {
     }
     return $result;
 }
-
-
+function add_inventory($language, $segments) {
+    $language_id = get_or_add_language(["value" => $language]);
+    $segments = array_unique($segments);
+    foreach($segments as $segment) {
+        $segment_id = get_or_add_segment(["value" => $segment]);
+        $query = "INSERT INTO languages_segments (language_id, segment_id) VALUES ('$language_id', '$segment_id')";
+        do_query($query);
+    }
+}
+function get_inventory($language_id) {
+    $query = "SELECT * FROM languages_segments
+    INNER JOIN segments
+    ON languages_segments.segment_id = segments.id
+    WHERE language_id = '$language_id'";
+    return array_map(function($segment) {
+        return $segment["value"];
+    }, get_query($query));
+}
 function count_tables() {
     GLOBAL $database;
     $query = "SHOW TABLES FROM $database;";
@@ -404,6 +411,12 @@ SELECT target_segment_id FROM pairs
     // probably need to do something similar for languages and transitions
 }
 function query_pairs($data) {
+    if      ($data["source_segment_id"]) $source_segment = get_or_add_segment(["value" => $data["source_segment"]]);
+    else if ($data["source_segment"])    $source_segment = $data["source_segment"];
+
+    if      ($data["target_segment_id"]) $target_segment = get_or_add_segment(["value" => $data["target_segment"]]);
+    else if ($data["target_segment"])    $target_segment = $data["target_segment"];
+
     $source_segment = $data["source_segment"];
     $target_segment = $data["target_segment"];
     $transition = $data["transition"];
@@ -431,34 +444,13 @@ else if ($source_segment) $query .= " AND source_segment.value = '$source_segmen
 else if ($target_segment) $query .= " AND target_segment.value = '$target_segment'";
 if ($transition) $query .= " HAVING transition = '$transition'";
 $query .= " ORDER BY transition";
-    history($query);
     return get_query($query);
 }
-function get_pairs_by_transition_id($transition_id, $limit=0) {
-    $query = "SELECT pairs.id AS id,
-source_segment.value AS source_segment,
-target_segment.value AS target_segment,
-CONCAT(source_language.value, ' → ', target_language.value) AS transition,
-pairs.environment,
-pairs.notes
-FROM pairs
-INNER JOIN segments AS source_segment
-INNER JOIN segments AS target_segment
-INNER JOIN transitions
-INNER JOIN languages AS source_language
-INNER JOIN languages AS target_language
-ON pairs.source_segment_id = source_segment.id
-AND pairs.target_segment_id = target_segment.id
-AND pairs.transition_id = transitions.id
-AND transitions.source_language_id = source_language.id
-AND transitions.target_language_id = target_language.id
-WHERE transitions.id = '$transition_id'
-ORDER BY transition
-";
-    if ($limit) $query .= " LIMIT $limit";
-    return get_query($query);
-}
-function get_pairs_by_transition($transition, $limit=0) {
+function get_pairs_by_transition($data) {
+    if      ($data["transition_id"]) $transition = get_transition(["value" => $data["transition_id"]]);
+    else if ($data["transition"])    $transition = $data["transition"];
+    if (!$transition) return -1;
+    $limit = isset($data["limit"]) ? $data["limit"] : 0;
     $query = "SELECT pairs.id AS id,
 source_segment.value AS source_segment,
 target_segment.value AS target_segment,
@@ -482,7 +474,8 @@ ORDER BY transition
     if ($limit) $query .= " LIMIT $limit";
     return get_query($query);
 }
-function get_pairs($limit=0) {
+function get_pairs($data) {
+    $limit = isset($data["limit"]) ? $data["limit"] : 0;
     $query = "SELECT pairs.id AS id,
 source_segment.value AS source_segment,
 target_segment.value AS target_segment,
@@ -504,49 +497,48 @@ ORDER BY transition";
     if ($limit) $query .= " LIMIT $limit";
     return get_query($query);
 }
-function add_inventory($family, $segments) {
-    $family_id = get_or_add_language($family);
-    $segments = array_unique($segments);
-    foreach($segments as $segment) {
-        $segment_id = get_or_add_segment($segment);
-        $query = "INSERT INTO languages_segments (language_id, segment_id) VALUES ('$family_id', '$segment_id')";
-        do_query($query);
-    }
-}
-function get_inventory($language_id) {
-    $query = "SELECT * FROM languages_segments
-    INNER JOIN segments
-    ON languages_segments.segment_id = segments.id
-    WHERE language_id = '$language_id'";
-    return array_map(function($segment) {
-        return $segment["value"];
-    }, get_query($query));
-}
-function get_segments($limit=0) {
+function get_segments($data=null) {
+    $limit = isset($data["limit"]) ? $data["limit"] : 0;
     $query = "SELECT id, value FROM segments ORDER BY value";
     if ($limit) $query .= " LIMIT $limit";
     foreach(get_query($query) as $row) {
         $results[] = ["id" => $row["id"], "value" => $row["value"]];
     }
-    // usort($results, 'strnatcasecmp');
     return $results;
 }
-function check_segment($value) {
-    $query = "SELECT id, value FROM segments WHERE value = '$value'";
+function check_segment($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "SELECT id, value FROM segments WHERE id = '$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "SELECT id, value FROM segments WHERE value = '$value'";
+    }
+    if (!$query) return "no id or value supplied to check_segment";
     $results = get_query($query);
     return !empty($results);
 }
-function get_segment($value) {
-    $query = "SELECT id, value FROM segments WHERE value = '$value'";
+function get_segment($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "SELECT id, value FROM segments WHERE id = '$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "SELECT id, value FROM segments WHERE value = '$value'";
+    }
+    if (!$query) return "no id or value supplied to get_segment";
     return get_query($query);
 }
-function add_segment($value) {
-    $value = trim($value);
-    if (!$value) return;
+function add_segment($data) {
+    $value = $data["value"];
+    if (!$value) return "no value supplied to get_segment";
     $query = "INSERT INTO segments (value) VALUES ('$value')";
     return do_query($query)->insert_id;
 }
-function get_languages($limit=0) {
+function get_languages($data=null) {
+    $limit = isset($data["limit"]) ? $data["limit"] : 0;
     $query = "SELECT id, value FROM languages";
     if ($limit) $query .= " LIMIT $limit";
     foreach(get_query($query) as $row) {
@@ -554,22 +546,39 @@ function get_languages($limit=0) {
     }
     return $results;
 }
-function check_language($value) {
-    $query = "SELECT id, value FROM languages WHERE value = '$value'";
+function check_language($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "SELECT id, value FROM languages WHERE id = '$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "SELECT id, value FROM languages WHERE value = '$value'";
+    }
+    if (!$query) return "no id or value supplied to check_language";
     $results = get_query($query);
     return !empty($results);
 }
-function get_language($value) {
-    $query = "SELECT id, value FROM languages WHERE value = '$value'";
+function get_language($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "SELECT id, value FROM languages WHERE id = '$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "SELECT id, value FROM languages WHERE value = '$value'";
+    }
+    if (!$query) return "no id or value supplied to get_language";
     return get_query($query);
 }
-function add_language($value) {
-    $value = trim($value);
-    if (!$value) return;
+function add_language($data) {
+    $value = $data["value"];
+    if (!$value) return -1;
     $query = "INSERT INTO languages (value) VALUES ('$value')";
     return do_query($query)->insert_id;
 }
-function get_transitions($limit=0) {
+function get_transitions($data=null) {
+    $limit = isset($data["limit"]) ? $data["limit"] : 0;
     $query = "SELECT
 transitions.id AS id,
 CONCAT(source_language.value, ' → ', target_language.value) as transition,
@@ -590,12 +599,28 @@ AND transitions.target_language_id = target_language.id
     });
     return $results;
 }
-function check_transition($source, $target) {
-    $query = "SELECT * FROM transitions WHERE source_language_id = '$source' AND   target_language_id = '$target'";
+function check_transition($data) {
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to check_transition";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to check_transition";
+
+    $query = "SELECT * FROM transitions WHERE source_language_id = '$source_language_id' AND target_language_id = '$target_language_id'";
     return !empty(get_query($query));
 }
-function get_transition($source, $target) {
-    $query = "SELECT * FROM transitions WHERE source_language_id = '$source' AND   target_language_id = '$target'";
+function get_transition($data) {
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to get_transition";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to get_transition";
+
+    $query = "SELECT * FROM transitions WHERE source_language_id = '$source_language_id' AND target_language_id = '$target_language_id'";
     foreach(get_query($query) as $row) {
         $results[] = $row;
     }
@@ -604,52 +629,87 @@ function get_transition($source, $target) {
 function update_transition($data) {
     $id = $data["id"];
 
-    $source_language = $data["source_language"];
-    $target_language = $data["target_language"];
-    $citation = $data["citation"];
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to update_transition";
 
-    $source_language_id = get_or_add_language($source_language);
-    $target_language_id = get_or_add_language($target_language);
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to update_transition";
+    
+    $citation = $data["citation"];
 
     $query = "UPDATE transitions SET source_language_id = '$source_language_id' , target_language_id = '$target_language_id' , citation = '$citation' WHERE id='$id'";
     do_query($query);
 }
-function add_transition($source_language_id, $target_language_id, $citation='') {
+function add_transition($data) {
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to add_transition";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to add_transition";
+    
+    $citation = $data["citation"];
+
     $query = "INSERT INTO transitions (source_language_id, target_language_id, citation) VALUES ('$source_language_id', '$target_language_id', '$citation')";
     $result = do_query($query)->insert_id;
     return $result;
 }
-function get_or_add_segment($segment) {
-    return check_segment($segment) ? get_segment($segment)[0]["id"] : add_segment($segment);
+function get_or_add_segment($data) {
+    $segment = $data["value"];
+    return check_segment(["value" => $segment]) ? get_segment(["value" => $segment])[0]["id"] : add_segment(["value" => $segment]);
 }
-function get_or_add_language($language) {
-    return check_language($language) ? get_language($language)[0]["id"] : add_language($language);
+function get_or_add_language($data) {
+    $language = $data["value"];
+    return check_language(["value" => $language]) ? get_language(["value" => $language])[0]["id"] : add_language(["value" => $language]);
 }
-function get_or_add_transition($source, $target, $citation='') {
-    if (!$source or !$target) return;
-    $checkTransition = check_transition($source, $target);
+function get_or_add_transition($data) {
+
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to get_or_add_transition";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to get_or_add_transition";
+
+    $citation = $data["citation"];
+    if (!$source_language_id or !$target_language_id) return;
+    $checkTransition = check_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]);
     if ($checkTransition) {
-        return get_transition($source, $target)[0]["id"];
+        return get_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id])[0]["id"];
     }
     else {
-        return add_transition($source, $target, $citation);
+        return add_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id, "citation" => $citation]);
     }
 }
 function update_pair($data) {
     $id = $data["id"];
-    $source_segment = $data["source_segment"];
-    $target_segment = $data["target_segment"];
-    $source_language = $data["source_language"];
-    $target_language = $data["target_language"];
+    if (!$id) return -1;
+
+    if      ($data["source_segment"])    $source_segment_id = get_or_add_segment(["value" => $data["source_segment"]]);
+    else if ($data["source_segment_id"]) $source_segment_id = $data["source_segment_id"];
+    else return "no source_segment supplied to update_pair";
+
+    if      ($data["target_segment"])    $target_segment_id = get_or_add_segment(["value" => $data["target_segment"]]);
+    else if ($data["target_segment_id"]) $target_segment_id = $data["target_segment_id"];
+    else return "no target_segment supplied to update_pair";
+
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to update_pair";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to update_pair";
+
     $environment = $data["environment"];
     $notes = $data["notes"];
 
-    $source_segment_id = get_or_add_segment($source_segment);
-    $target_segment_id = get_or_add_segment($target_segment);
-    $source_language_id = get_or_add_language($source_language);
-    $target_language_id = get_or_add_language($target_language);
-
-    $transition_id = get_or_add_transition($source_language_id, $target_language_id);
+    $data = ["source_language_id" => $source_language_id, "target_language_id" => $target_language_id];
+    $transition_id = get_or_add_transition($data);
 
     $query = "UPDATE pairs
     SET source_segment_id = '$source_segment_id'
@@ -660,30 +720,35 @@ function update_pair($data) {
     WHERE id='$id'";
 
     do_query($query);
-    echo "update_pair $id $source_segment_id $target_segment_id $transition_id";
 }
 function add_pair($data) {
-    $source_segment = $data["source_segment"];
-    $target_segment = $data["target_segment"];
-    $source_language = $data["source_language"];
-    $target_language = $data["target_language"];
+    if      ($data["source_segment"])    $source_segment_id = get_or_add_segment(["value" => $data["source_segment"]]);
+    else if ($data["source_segment_id"]) $source_segment_id = $data["source_segment_id"];
+    else return "no source_segment supplied to add_pair";
+
+    if      ($data["target_segment"])    $target_segment_id = get_or_add_segment(["value" => $data["target_segment"]]);
+    else if ($data["target_segment_id"]) $target_segment_id = $data["target_segment_id"];
+    else return "no target_segment supplied to add_pair";
+
+    if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
+    else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
+    else return "no source_language supplied to add_pair";
+
+    if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
+    else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
+    else return "no target_language supplied to add_pair";
+
     $environment = $data["environment"];
     $notes = $data["notes"];
 
-    $source_segment_id = get_or_add_segment($source_segment);
-    $target_segment_id = get_or_add_segment($target_segment);
-
-    $transition_id = $data["transition"];
-    if (!$transition_id) {
-        $source_language_id = get_or_add_language($source_language);
-        $target_language_id = get_or_add_language($target_language);
-        $transition_id = get_or_add_transition($source_language_id, $target_language_id);
-    }
+    if      ($data["transition"])    $transition_id = get_or_add_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]);
+    else if ($data["transition_id"]) $transition_id = $data["transition_id"];
 
     $query = "SELECT * from pairs WHERE source_segment_id = '$source_segment_id' AND target_segment_id = '$target_segment_id' AND transition_id = '$transition_id'";
     $pair = get_query($query);
     if (!empty($pair) and $environment) {
         $id = $pair[0]["id"];
+        if (!$id) return "no id found for pair, but somehow a result was returned?";
         $query = "UPDATE pairs SET environment = concat(environment, ' $environment') WHERE id='$id'";
         do_query($query);
     }
@@ -692,36 +757,69 @@ function add_pair($data) {
         return do_query($query)->insert_id;
     }
 }
-function update_segment($id, $value) {
+function update_segment($data) {
+    $id = $data["id"];
+    $value = $data["value"];
+    if (!$id or !$value) return "id or value not supplied to update_segment";
     $query = "UPDATE segments SET value = '$value' WHERE id='$id'";
     do_query($query);
-    echo "update_segment $id $value";
 }
-function update_language($id, $value) {
+function update_language($data) {
+    $id = $data["id"];
+    $value = $data["value"];
+    if (!$id or !$value) return "id or value not supplied to update_language";
     $query = "UPDATE languages SET value = '$value' WHERE id='$id'";
     do_query($query);
-    echo "update_language $id";
 }
-function remove_pair($id) {
+function remove_pair($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "DELETE FROM pairs WHERE id='$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "DELETE FROM pairs WHERE id='$value'";
+    }
+    if (!$query) return "no id or value supplied to remove_pair";
     $query = "DELETE FROM pairs WHERE id='$id'";
-    echo $query;
     do_query($query);
-    echo "remove_pair $id";
 }
-function remove_segment($id) {
+function remove_segment($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "DELETE FROM segments WHERE id='$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "DELETE FROM segments WHERE id='$value'";
+    }
+    if (!$query) return "no id or value supplied to remove_segment";
     $query = "DELETE FROM segments WHERE id='$id'";
     do_query($query);
-    echo "remove_segment $id";
 }
-function remove_language($id) {
-    $query = "DELETE FROM languages WHERE id='$id'";
+function remove_language($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "DELETE FROM languages WHERE id='$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "DELETE FROM languages WHERE id='$value'";
+    }
+    if (!$query) return "no id or value supplied to remove_language";
     do_query($query);
-    echo "remove_language $id";
 }
-function remove_transition($id) {
-    $query = "DELETE FROM transitions WHERE id='$id'";
+function remove_transition($data) {
+    if ($data["id"]) {
+        $id = $data["id"];
+        $query = "DELETE FROM transitions WHERE id='$id'";
+    }
+    else if ($data["value"]) {
+        $value = $data["value"];
+        $query = "DELETE FROM transitions WHERE id='$value'";
+    }
+    if (!$query) return "no id or value supplied to remove_transition";
     do_query($query);
-    echo "remove_transition $id";
 }
 function printr() {
     foreach (func_get_args() as $i) {
