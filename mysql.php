@@ -23,7 +23,7 @@ if ($_GET) {
         case "graph":
             switch($type) {
                 case "language":
-                    $language_id = get_language($language)[0]["id"];
+                    $language_id = get_language(["value" => $language]);
                     switch($query) {
                         case "parent": echo json_encode(get_data(get_structure(get_parent($language)))); break;
                         case "structure": echo json_encode(get_data(get_structure($language))); break;
@@ -35,9 +35,10 @@ if ($_GET) {
                     }
                 break;
                 case 'segment':
-                    $data = ["source_segment" => $segment, "target_segment" => $segment];
-                    $pairs = query_pairs($data);
-                    echo json_encode(generate_segment_data($pairs));
+                    echo json_encode(generate_segment_data($data));
+                break;
+                case "transition":
+                    echo json_encode(generate_transition_data($data));
                 break;
             }
         break;
@@ -78,7 +79,6 @@ if ($_GET) {
             $target_segment = "i";
             $source_language = "Proto-Indo-European";
             $target_language = "Latin";
-
 
             printr("count_tables: ", count_tables());
             printr("get_tables: ", json_encode(get_tables()));
@@ -259,7 +259,11 @@ function reset_database() {
     $query = "SET FOREIGN_KEY_CHECKS = 1";
     do_query($query);
 }
-function generate_segment_data($pairs) {
+function generate_segment_data($data) {
+    if (!$data["value"]) return "segment not provided to generate_segment_data";
+    $data = ["source_segment" => $data["value"], "target_segment" => $data["value"]];
+    $pairs = query_pairs($data);
+
     $result = [];
     foreach($pairs as $pair) {
         $result[] = $pair["source_segment"];
@@ -281,6 +285,36 @@ function generate_segment_data($pairs) {
             "transition" => $pair["transition"],
             "source_language" => $source_label,
             "target_language" => $target_label,
+        ]];
+    }
+    return $result;
+}
+function generate_transition_data($data) {
+    if ($data["value"]) $transition = $data["value"];
+    $pairs = query_pairs(["transition" => $transition]);
+
+    $result = [];
+    foreach($pairs as $pair) {
+        $result[] = $pair["source_segment"];
+        $result[] = $pair["target_segment"];
+    }
+    $result = array_unique($result);
+    $result = array_values($result);
+    $result = array_map(function($a) {
+        return ["data" => ["id" => $a, "label" => $a]];
+    }, $result);
+
+
+
+    foreach($pairs as $pair) {
+        if (strcmp($pair["source_segment"], $pair["target_segment"]) === 0) continue;
+        $result[] = ["data" => [
+            "id" => $pair["source_segment"]."→".$pair["target_segment"],
+            "label" => $pair["source_segment"]."→".$pair["target_segment"],
+            "transition" => $pair["source_segment"]."→".$pair["target_segment"],
+            "source" => $pair["source_segment"],
+            "target" => $pair["target_segment"],
+            "environment" => $pair["environment"],
         ]];
     }
     return $result;
@@ -500,8 +534,6 @@ function query_pairs($data) {
     if      ($data["target_segment_id"]) $target_segment = get_or_add_segment(["value" => $data["target_segment"]]);
     else if ($data["target_segment"])    $target_segment = $data["target_segment"];
 
-    $source_segment = $data["source_segment"];
-    $target_segment = $data["target_segment"];
     $transition = $data["transition"];
     $query = "SELECT pairs.id AS id,
 source_segment.value AS source_segment,

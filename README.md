@@ -25,17 +25,14 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 + [cytoscape.js](https://js.cytoscape.org/)
 
-#### Refactoring:
-+ when modifying something and that something already exists, merge rather than reject
-
 #### Enhancements: 
-+ graph that shows all pairs for a specific transition
++ merge graph viewers, enhance graphs
 + view and edit modes
 + integrate graphs into data interface
 + option to toggle between showing transition and source language → target language
 + add depth option (will definitely need a circularity check, see segment "an")
 + for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
-+ sql injection prevention / input sanitization
++ sql injection barriers / input sanitization
 + regular backups of data, data approval
 + languages and transitions need both citation and notes fields
 
@@ -53,6 +50,12 @@ $database = (isset($database) ? $database : "diachron");
 + create look up table that returns all phones of a given abbreviation
 + then filter for only those that belong to a specific language
 
+#### Refactoring:
++ when modifying something and that something already exists, merge rather than reject
+
+#### Known Bugs:
++ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
+
 ### Possible Enhancements:
 + calculate inventories from ancestral inventory and rules through data interface
 + editing nodes and vertices updates database?
@@ -60,7 +63,3 @@ $database = (isset($database) ? $database : "diachron");
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
 + dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 + consider having separate phone table rather than just segment table
-
-#### Known Bugs:
-+ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
-

@@ -1,6 +1,6 @@
 <html>
 <head>
-<title>Graph | Diachron DB</title>
+<title>Segment Graph | Diachron DB</title>
 <meta charset='UTF-8'>
 <link href='https://www.matthewmorrone.com/psi-fff.ico' rel='shortcut icon' type='image/x-icon'>
 <link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-white.ico' id='psi-white'>
@@ -43,6 +43,16 @@ function populateSelect(id, options) {
         $select.append(`<option>${val}</option>`);
     });
 }
+async function $get(url, data) {
+    let result = false;
+    try {
+        result = await $.get(url, data);
+    }
+    catch(e) {
+        console.error(e);
+    }
+    return result;
+}
 async function $getJSON(url, data) {
     let result = false;
     try {
@@ -74,8 +84,10 @@ async function loadSegments() {
 }
 async function loadSegmentData(segment) {
     segment = segment || $("#segments").val();
-    let headers = {mode: 'graph', type: 'segment', segment: segment};
+    let headers = {mode: 'graph', type: 'segment', data: {value: segment}};
+    console.log(headers)
     let data = await $getJSON(url, headers);
+    console.log(data)
     return data;
 }
 function cytoscapeFunctionality(cy) {
