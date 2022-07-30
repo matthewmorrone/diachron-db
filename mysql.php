@@ -88,7 +88,7 @@ if ($_GET) {
 
             printr("check_segment $source_segment: ", check_segment(["value" => $source_segment]));
             printr("get_segment $source_segment: ", get_segment(["value" => $source_segment])[0]["id"]);
-            
+
             printr("check_segment $target_segment: ", check_segment(["value" => $target_segment]));
             printr("get_segment $target_segment: ", get_segment(["value" => $target_segment])[0]["id"]);
 
@@ -109,22 +109,11 @@ if ($_GET) {
             reset_database();
         break;
         case "dump":
-            $export = [];
-            $export[] = [
-                "type" => "database",
-                "name" => $database
-            ];
-            $tables = get_tables();
-            foreach($tables as $table) {
-                $data = get_query("select * from $table");
-                $export[] = [
-                    "type" => "table",
-                    "database" => $database,
-                    "table" => $table,
-                    "data" => $data
-                ];
+            switch($format) {
+                case "json": echo exportJson(); break;
+                case "sql":  echo exportSql(); break;
+                case "csv":  echo exportCsv(); break;
             }
-            echo json_encode($export);
         break;
         default: break;
     }
@@ -144,6 +133,100 @@ function log_writes($output) {
     $timestamp = date('Y/m/d H:i:s');
     $output = preg_replace("/[\s]+/", " ", $output);
     file_put_contents("log/history-writes.log", "$timestamp\t$output\n", FILE_APPEND);
+}
+function exportJson() {
+    $export = [];
+    $export[] = [
+        "type" => "database",
+        "name" => 'diachron'
+    ];
+    $tables = get_tables();
+    foreach($tables as $table) {
+        $data = get_query("select * from $table");
+        $export[] = [
+            "type" => "table",
+            "database" => 'diachron',
+            "table" => $table,
+            "data" => $data
+        ];
+    }
+    header('Content-type: Application/JSON');
+    return json_encode($export, JSON_PRETTY_PRINT);
+}
+function exportSql($tables=false, $backup_name=false) {
+    GLOBAL $mysqli;
+    $mysqli->query("SET NAMES 'utf8'");
+
+    $queryTables = $mysqli->query('SHOW TABLES');
+    while($row = $queryTables->fetch_row()) $target_tables[] = $row[0];
+
+    if ($tables !== false) $target_tables = array_intersect($target_tables, $tables);
+    foreach ($target_tables as $table) {
+        $result        = $mysqli->query('SELECT * FROM '.$table);
+        $fields_amount = $result->field_count;
+        $rows_num      = $mysqli->affected_rows;
+        $res           = $mysqli->query('SHOW CREATE TABLE '.$table);
+        $TableMLine    = $res->fetch_row();
+        $content       = (!isset($content) ? '' : $content) . "\n\n".$TableMLine[1].";\n\n";
+
+        for ($i = 0, $st_counter = 0; $i < $fields_amount; $i++, $st_counter=0) {
+            while ($row = $result->fetch_row()) {
+                if ($st_counter % 100 == 0 || $st_counter == 0) {
+                    $content .= "\nINSERT INTO ".$table." VALUES";
+                }
+                $content .= "\n(";
+                for ($j = 0; $j < $fields_amount; $j++) {
+                    $row[$j] = str_replace("\n", "\\n", addslashes($row[$j]));
+                    if (isset($row[$j])) $content .= '"'.$row[$j].'"';
+                    else $content .= '""';
+                    if ($j < ($fields_amount - 1)) $content.= ',';
+                }
+                $content .= ")";
+                if ((($st_counter + 1) % 100 == 0 && $st_counter != 0) || $st_counter + 1 == $rows_num) $content .= ";";
+                else $content .= ",";
+                $st_counter = $st_counter + 1;
+            }
+        }
+        $content .= "\n\n";
+    }
+    $backup_name = $backup_name ? $backup_name : "diachron.sql";
+    header('Content-Type: application/octet-stream');
+    header("Content-Transfer-Encoding: Binary");
+    header("Content-disposition: attachment; filename=\"".$backup_name."\"");
+    return $content;
+}
+function exportCsv($tables=false, $backup_name=false) {
+    GLOBAL $mysqli;
+    $mysqli->query("SET NAMES 'utf8'");
+
+    $queryTables = $mysqli->query('SHOW TABLES');
+    while($row = $queryTables->fetch_row()) $target_tables[] = $row[0];
+
+    if ($tables !== false) $target_tables = array_intersect($target_tables, $tables);
+    $content = "";
+
+    foreach ($target_tables as $table) {
+        $result = $mysqli->query('SELECT * FROM '.$table);
+
+        $content .= "$table\n";
+        for ($i = 0; $i < $result->field_count; $i++) {
+            while ($row = $result->fetch_row()) {
+                for ($j = 0; $j < $result->field_count; $j++) {
+                    $row[$j] = str_replace("\n", "\\n", addslashes($row[$j]));
+                    if (isset($row[$j])) $content .= '"'.$row[$j].'"';
+                    else $content .= '""';
+                    if ($j < ($result->field_count - 1)) $content.= ',';
+                }
+                $content .= "\n";
+            }
+        }
+        $content .= "~~~~~~~\n";
+    }
+    $backup_name = $backup_name ? $backup_name : "diachron.csv";
+    header("Content-Description: File Transfer");
+    header("Content-disposition: attachment; filename=\"".$backup_name."\"");
+    header("Content-Type: application/csv;");
+    return $content;
 }
 function get_query($query) {
     GLOBAL $mysqli, $debug;
@@ -198,7 +281,7 @@ function generate_segment_data($pairs) {
             "transition" => $pair["transition"],
             "source_language" => $source_label,
             "target_language" => $target_label,
-        ]]; 
+        ]];
     }
     return $result;
 }
@@ -636,7 +719,7 @@ function update_transition($data) {
     if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
     else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
     else return "no target_language supplied to update_transition";
-    
+
     $citation = $data["citation"];
 
     $query = "UPDATE transitions SET source_language_id = '$source_language_id' , target_language_id = '$target_language_id' , citation = '$citation' WHERE id='$id'";
@@ -650,7 +733,7 @@ function add_transition($data) {
     if      ($data["target_language"])    $target_language_id = get_or_add_language(["value" => $data["target_language"]]);
     else if ($data["target_language_id"]) $target_language_id = $data["target_language_id"];
     else return "no target_language supplied to add_transition";
-    
+
     $citation = $data["citation"];
 
     $query = "INSERT INTO transitions (source_language_id, target_language_id, citation) VALUES ('$source_language_id', '$target_language_id', '$citation')";

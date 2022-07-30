@@ -29,34 +29,36 @@ $database = (isset($database) ? $database : "diachron");
 + when modifying something and that something already exists, merge rather than reject
 
 #### Enhancements: 
++ graph that shows all pairs for a specific transition
 + view and edit modes
 + integrate graphs into data interface
-+ graph that shows all pairs for a specific transition
-+ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 + option to toggle between showing transition and source language → target language
-+ split log into queries and inserts/updates/deletes
-+ download options for json, sql, csv (zipped if several files)
 + add depth option (will definitely need a circularity check, see segment "an")
 + for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
-+ calculate inventories from ancestral inventory and rules through data interface
 + sql injection prevention / input sanitization
 + regular backups of data, data approval
-+ editing nodes and vertices updates database?
++ languages and transitions need both citation and notes fields
+
+### Inventory Calculation
 + edit inventories through data interface
++ when calculating an inventory, include segments in source column of rules
++ expansion of abbreviations and inventory enumeration
++ will need to have each language's inventory (available in html but currently ignored)
++ add data to database which contains every phone that belongs to a language
++ and a method of retrieving members based on features, which will require a lookup table
++ lookup table maps abbreviations to all phones they would represent
++ given a language and a category, return that set of phones within that language
++ given a language, start at its earliest inventoried ancestor apply enumerate sound changes
++ differences from actual inventory will elucidate missing data
++ create look up table that returns all phones of a given abbreviation
++ then filter for only those that belong to a specific language
+
+### Possible Enhancements:
++ calculate inventories from ancestral inventory and rules through data interface
++ editing nodes and vertices updates database?
 + draggable columns, if saveable to localStorage even better
 + consider adding in environment data for pairs: alternatively, encourage specific segment notation
-+ when calculating an inventory, include segments in source column of rules
-+ expansion of abbreviations and inventory enumeration:
-  + will need to have each language's inventory (available in html but currently ignored)
-  + add data to database which contains every phone that belongs to a language
-  + and a method of retrieving members based on features, which will require a lookup table
-  + lookup table maps abbreviations to all phones they would represent
-  + given a language and a category, return that set of phones within that language
-  + given a language, start at its earliest inventoried ancestor apply enumerate sound changes:
-  + differences from actual inventory will elucidate missing data
-+ create look up table that returns all phones of a given abbreviation
-  + then filter for only those that belong to a specific language
-+ languages and transitions need both citation and notes fields
++ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 + consider having separate phone table rather than just segment table
 
 #### Known Bugs:

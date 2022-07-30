@@ -70,7 +70,8 @@ footer a {
     100% {background-color: yellow;}
 }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"></script>
 <script src="https://unpkg.com/@yaireo/tagify"></script>
 <script src="https://unpkg.com/@yaireo/tagify/dist/tagify.polyfills.min.js"></script>
 <script src='js/icon.js'></script>
@@ -78,6 +79,8 @@ footer a {
 <script src='js/utils.js'></script>
 <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.modern.js"></script>
 <script src='js/keyboard.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.js"></script>
 <script>
 let url = `mysql.php`;
 
@@ -166,10 +169,38 @@ function download(filename, text) {
     element.click();
     document.body.removeChild(element);
 }
-async function exportData() {
-    let headers = {mode: 'dump'};
-    let data = await $getJSON(url, headers);
-    download("diachron.json", JSON.stringify(data));
+async function exportData(format) {
+    if (!format) return false;
+    let headers = {mode: 'dump', format: format};
+    if (format === 'json') {
+        let data = await $getJSON(url, headers);
+        download("diachron.json", JSON.stringify(data));
+    }
+    if (format === 'sql') {
+        let data = await $get(url, headers);
+        download("diachron.sql", data);
+    }
+    if (format === 'csv') {
+        let data = await $get(url, headers);
+        data = data.trim();
+        data = data.split("~~~~~~~");
+
+        const zip = new JSZip();
+        const folder = zip.folder("diachron");
+
+        data.forEach(function(datum) {
+            datum = datum.trim();
+            datum = datum.split("\n");
+            let filename = datum[0]+".csv";
+            let contents = datum.slice(1).join("\n");
+            if (!filename || !contents) return;
+            folder.file(filename, contents);
+        });
+
+        zip.generateAsync({type:"blob"}).then(function(content) {
+            saveAs(content, "diachron.zip");
+        });
+    }
 }
 
 function sortDropdown($sel) {
@@ -631,8 +662,8 @@ $(function() {
         randomTransition();
     });
 
-    $("#export").click(function() {
-        exportData();
+    $("#export li button").click(function() {
+        exportData($(this).val());
     });
 });
 </script>
@@ -647,7 +678,14 @@ $(function() {
         <button class="btn btn-primary" id="languagesModal">Languages</button>
         <button class="btn btn-primary" id="transitionsModal">Transitions</button>
         <button class="btn btn-primary" id="about">About</button>
-        <button class="btn btn-secondary" id="export">Export Data</button>
+        <div class="btn-group" role="group" id="export">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
+            <ul class="dropdown-menu">
+                <li><button class="dropdown-item" value='json'>JSON</button></li>
+                <li><button class="dropdown-item" value='sql'>SQL</button></li>
+                <li><button class="dropdown-item" value='csv'>CSV</button></li>
+            </ul>
+        </div>
         <div class="simple-keyboard"></div>
     </header>
     <content>
