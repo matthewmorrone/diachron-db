@@ -26,9 +26,8 @@ $database = (isset($database) ? $database : "diachron");
 + [cytoscape.js](https://js.cytoscape.org/)
 
 #### Enhancements: 
++ more robust url routing
 + merge graph viewers, enhance graphs
-+ view and edit modes
-+ integrate graphs into data interface
 + option to toggle between showing transition and source language → target language
 + add depth option (will definitely need a circularity check, see segment "an")
 + for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
