@@ -26,6 +26,7 @@ $database = (isset($database) ? $database : "diachron");
 + [cytoscape.js](https://js.cytoscape.org/)
 
 #### Enhancements: 
++ open graphs in iframe on same page rather than new tab
 + more robust url routing
 + merge graph viewers, enhance graphs
 + option to toggle between showing transition and source language → target language
