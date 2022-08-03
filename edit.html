@@ -5,6 +5,7 @@
 <link href='https://www.matthewmorrone.com/psi-fff.ico' rel='shortcut icon' type='image/x-icon'>
 <link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-white.ico' id='psi-white'>
 <link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-black.ico' id='psi-black'>
+<link href='style.css' rel='stylesheet'></link>
 <style>
 @charset 'UTF-8';
 @import 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
@@ -12,67 +13,7 @@
 @import 'https://www.matthewmorrone.com/font-awesome.min.css';
 @import 'https://unpkg.com/@yaireo/tagify/dist/tagify.css';
 @import 'https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css';
-@import 'style.css';
-button a, button a:hover {
-    text-decoration: none;
-    color: #fff;
-}
-#pairs {
-    width: 70%;
-    margin: auto;
-}
-#pairs thead input,
-#pairs thead select {
-    display: block;
-    width: 100%;
-    height: 26px;
-    float: left;
-}
-.source_segment, .target_segment {
-    width: 100px;
-}
-.transition {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-.environment, .notes {
-    width: 200px;
-    max-width: 200px;
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-.submit {
-    width: 48px;
-    max-width: 48px;
-}
-.edit {
-    outline: none;
-    border: 1px solid black;
-    width: 100%;
-    height: 100%;
-    padding: 0px;
-    margin: -1px;
-}
-.colorchange {
-    animation: colorchange 4s infinite;
-}
-footer {
-    clear: both;
-    margin: 10px;
-    padding: 10px;
-}
-footer a {
-    vertical-align: middle;
-    text-decoration: none;
-}
-@keyframes colorchange {
-    0%   {background-color: red;}
-    25%  {background-color: green;}
-    75%  {background-color: blue;}
-    100% {background-color: yellow;}
-}
+@import 'index.css';
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"></script>
@@ -85,7 +26,6 @@ footer a {
 <script src='js/keyboard.js'></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/router_js@8.0.2/dist/cjs/index.min.js"></script>
 <script>
 let url = `mysql.php`;
 

@@ -65,3 +65,56 @@ tag::before {
 textarea {
     resize: both;
 }
+button a, button a:hover {
+    text-decoration: none;
+    color: #fff;
+}
+#pairs {
+    width: 70%;
+    margin: auto;
+}
+#pairs thead input,
+#pairs thead select {
+    display: block;
+    width: 100%;
+    height: 26px;
+    float: left;
+}
+a {
+    text-decoration: none;
+}
+.source_segment, .target_segment {
+    width: 100px;
+}
+.transition {
+    overflow: hidden;
+    width: 400px;
+    min-width: 400px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.transition select {
+    width: 100%;
+}
+.environment {
+    /* width: 300px; */
+    /* max-width: 300px; */
+}
+.notes {
+    /* width: 300px; */
+    /* max-width: 300px; */
+}
+.environment, .notes {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+footer {
+    clear: both;
+    margin: 10px;
+    padding: 10px;
+}
+footer a {
+    vertical-align: middle;
+    text-decoration: none;
+}

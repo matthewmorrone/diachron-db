@@ -93,10 +93,11 @@ async function doStuff() {
     await loadLanguages();
     let language = $("#languages").val();
     let languageData = await loadLanguageData(language);
+
     let data = {
         container: document.getElementById('cy'),
         elements: languageData,
-        wheelSensitivity: 0.2,
+        // wheelSensitivity: 0.2,
         selectionType: 'single',
         layout: {
             name: $("#layout").val(),
@@ -120,18 +121,37 @@ async function doStuff() {
         }],
     };
     let cy = cytoscape(data);
+    cy.nodes(`[id = "${language}"]`).style('background-color', 'gold');
+
+    /*
+    let node = cy.getElementById(language); // cy.nodes(`[id = "${language}"]`);
+
+    console.log(node.data());
+
+    document.getElementById("cy").addEventListener("wheel", function(e) {
+        console.log(cy.zoom());
+    }, {passive: true});
+    console.log(cy.zoom());
+    cy.zoom({
+        level: 1.5,
+        position: node.position()
+    });
+    */
+
     $("#languages, #query").change(async function() {
         language = $("#languages").val();
         languageData = await loadLanguageData(language);
         data.elements = languageData;
         cy = cytoscape(data);
+        cy.nodes(`[id = "${language}"]`).style('background-color', 'gold');
+        window.history.pushState("", "", "family-graph.html?language="+language);
     });
     $("#layout").change(function() {
         if ($(this).val() === "avsdf") {
             let layout = cy.layout({
                 name: $(this).val(),
                 nodeDimensionsIncludeLabels: true,
-                fit: true,
+                fit: false,
                 padding: 20,
             });
             layout.run();  
@@ -141,7 +161,7 @@ async function doStuff() {
             name: $(this).val(),
             animate: true,
             nodeDimensionsIncludeLabels: true,
-            fit: true,
+            fit: false,
             padding: 20,
         });
         layout.run();

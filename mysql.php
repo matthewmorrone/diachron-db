@@ -304,8 +304,6 @@ function generate_transition_data($data) {
         return ["data" => ["id" => $a, "label" => $a]];
     }, $result);
 
-
-
     foreach($pairs as $pair) {
         if (strcmp($pair["source_segment"], $pair["target_segment"]) === 0) continue;
         $result[] = ["data" => [
