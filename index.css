@@ -1,21 +1,30 @@
+* {
+    margin: 0px;
+    padding: 0px;
+}
 *::-webkit-scrollbar { 
     display: none;
-}
-header, content, footer {
-    text-align: center;
-}
-#pairs {
-    table-layout: fixed;
-}
-.table > :not(:first-child), tbody {
-    border-top: 0px solid currentColor !important;
-}
-th {
-    text-align: center;
 }
 select:focus, input:focus, textarea:focus {
     outline: none;
 }
+th {
+    text-align: center;
+}
+button a, button a:hover {
+    text-decoration: none;
+    color: #fff;
+}
+a {
+    text-decoration: none;
+}
+.simple-keyboard {
+    display: none;
+    width: 50%;
+    margin: auto;
+    margin-top: 35px;
+}
+
 .ex, .plus, .view {
     float: left;
     width: 1.5em;
@@ -35,12 +44,66 @@ select:focus, input:focus, textarea:focus {
 .view {
     background: url('img/view.svg') no-repeat;
 }
-tag::before {
-    content: '\A'; 
-    white-space: pre;
+
+body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
+header, content, footer {
+    width: 100%;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+table {
+    margin: auto;
+}
+.table {
+    width: auto !important;
+}
+.table > :not(:first-child), tbody {
+    border-top: 0px solid currentColor !important;
+}
+input, select {
+    width: 100%;
+}
+.source_segment {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+.target_segment {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+.transition {
+    flex-grow: 2;
+    flex-shrink: 1;
+}
+.environment {
+    flex-grow: 1;
+    flex-shrink: 1;
+    max-width: 500px;
+}
+.notes {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+textarea {
+    resize: both;
+}
+.noverflow {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 .alert {
     margin-bottom: 0px !important;
+}
+.modal-title {
+    text-align: center;
 }
 .modal-dialog {
     position: relative;
@@ -55,66 +118,4 @@ tag::before {
     white-space: nowrap;
     text-overflow: ellipsis;
     max-width: 200px;
-}
-.simple-keyboard {
-    display: none;
-    width: 50%;
-    margin: auto;
-    margin-top: 35px;
-}
-textarea {
-    resize: both;
-}
-button a, button a:hover {
-    text-decoration: none;
-    color: #fff;
-}
-#pairs {
-    width: 70%;
-    margin: auto;
-}
-#pairs thead input,
-#pairs thead select {
-    display: block;
-    width: 100%;
-    height: 26px;
-    float: left;
-}
-a {
-    text-decoration: none;
-}
-.source_segment, .target_segment {
-    width: 100px;
-}
-.transition {
-    overflow: hidden;
-    width: 400px;
-    min-width: 400px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-.transition select {
-    width: 100%;
-}
-.environment {
-    /* width: 300px; */
-    /* max-width: 300px; */
-}
-.notes {
-    /* width: 300px; */
-    /* max-width: 300px; */
-}
-.environment, .notes {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-footer {
-    clear: both;
-    margin: 10px;
-    padding: 10px;
-}
-footer a {
-    vertical-align: middle;
-    text-decoration: none;
 }

@@ -779,7 +779,6 @@ function get_or_add_language($data) {
     return check_language(["value" => $language]) ? get_language(["value" => $language])[0]["id"] : add_language(["value" => $language]);
 }
 function get_or_add_transition($data) {
-
     if      ($data["source_language"])    $source_language_id = get_or_add_language(["value" => $data["source_language"]]);
     else if ($data["source_language_id"]) $source_language_id = $data["source_language_id"];
     else return "no source_language supplied to get_or_add_transition";
@@ -854,8 +853,8 @@ function add_pair($data) {
     $environment = $data["environment"];
     $notes = $data["notes"];
 
-    if      ($data["transition"])    $transition_id = get_or_add_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]);
-    else if ($data["transition_id"]) $transition_id = $data["transition_id"];
+    if ($data["transition_id"]) $transition_id = $data["transition_id"];
+    else                        $transition_id = get_or_add_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]);
 
     $query = "SELECT * from pairs WHERE source_segment_id = '$source_segment_id' AND target_segment_id = '$target_segment_id' AND transition_id = '$transition_id'";
     $pair = get_query($query);

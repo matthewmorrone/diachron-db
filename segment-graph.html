@@ -34,6 +34,7 @@
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/demo/forTestingCose/cytoscape-cosep-port.js"></script>
 <script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/cytoscape-cosep.js"></script>
 <script src='js/utils.js'></script>
+<script src='index.js'></script>
 <script type="module">
 let url = 'mysql.php';
 function populateSelect(id, options) {
@@ -42,26 +43,6 @@ function populateSelect(id, options) {
         let [key, val] = entry;
         $select.append(`<option>${val}</option>`);
     });
-}
-async function $get(url, data) {
-    let result = false;
-    try {
-        result = await $.get(url, data);
-    }
-    catch(e) {
-        console.error(e);
-    }
-    return result;
-}
-async function $getJSON(url, data) {
-    let result = false;
-    try {
-        result = await $.getJSON(url, data);
-    }
-    catch(e) {
-        console.error(e);
-    }
-    return result;
 }
 function get() {
     let qs = document.location.search;
@@ -93,6 +74,7 @@ async function loadSegmentData(segment) {
 function cytoscapeFunctionality(cy) {
     cy.on('click', 'node', async function() {
         let segment = this.id();
+        console.log(segment)
         $("#segments").val(segment).trigger("change");
     });
 }
@@ -139,13 +121,13 @@ async function doStuff() {
     let cy = cytoscape(data);
     cytoscapeFunctionality(cy)
     $("#segments").change(async function() {
-        segment = $("#segment").val();
+        segment = $("#segments").val();
         segmentData = await loadSegmentData(segment);
         data.elements = segmentData;
         data.layout.name = $("#layout").val();
         cy = cytoscape(data);
         cytoscapeFunctionality(cy);
-        window.history.pushState("", "", "segment-graph.html/"+segment);
+        window.history.pushState("", "", "segment-graph.html?segment="+segment);
     });
     $("#edge").change(function() {
         console.log($(this).val())

@@ -410,10 +410,16 @@ function database($results) {
     $debug = true;
     reset_database();
     foreach($results as $result) {
-        $source_language_id = get_or_add_language($result["source_language"]);
-        $target_language_id = get_or_add_language($result["target_language"]);
+        if (!$result["source_language"] or !$result["target_language"]) continue;
+        $source_language_id = get_or_add_language(["value" => $result["source_language"]]);
+        $target_language_id = get_or_add_language(["value" => $result["target_language"]]);
         $citation = $result["citation"];
-        get_or_add_transition($source_language_id, $target_language_id, $citation);
+        $data = [
+            "source_language_id" => $source_language_id,
+            "target_language_id" => $target_language_id,
+            "citation" => $citation,
+        ];
+        get_or_add_transition($data);
     }
     foreach($results as $result) {
         $segments = $result["segments"];
@@ -442,7 +448,7 @@ function database($results) {
 }
 
 database($results);
-echo json_encode($results);
+// echo json_encode($results);
 
 set_time_limit(120);
 ?>

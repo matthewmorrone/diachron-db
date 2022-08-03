@@ -137,10 +137,6 @@ async function doStuff() {
     };
     let cy = cytoscape(data);
 
-
-
-
-
     cytoscapeFunctionality(cy)
     $("#transitions").change(async function() {
         transition = $("#transitions").val();
@@ -149,7 +145,7 @@ async function doStuff() {
         data.layout.name = $("#layout").val();
         cy = cytoscape(data);
         cytoscapeFunctionality(cy);
-        // window.history.pushState("object or string", "Title", "transition-graph.html/"+transition);
+        // window.history.pushState("object or string", "Title", "transition-graph.html?transition="+transition);
     });
     $("#edge").change(function() {
         console.log($(this).val())
