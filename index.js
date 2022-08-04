@@ -73,11 +73,14 @@ function jsonToDataList(options, id) {
     result += '</datalist>';
     return result;
 }
-function jsonToTableRow(data, id) {
+function jsonToTableRow(data, id, ex) {
     let result = `<tr ${id}='${data['id']}'>`;
     for (let key in data) {
         if (key === 'id') continue;
         result += `<td class='${key} noverflow'>${data[key]}</td>`;
+    }
+    if (ex) {
+        result += `<td class='submit'><button class='ex' data-bs-id="${data['id']}"></button></td>`;
     }
     result += `</tr>`;
     return result;

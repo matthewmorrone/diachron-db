@@ -1,0 +1,3 @@
+RewriteEngine on
+RewriteRule view index.html [L]
+RewriteRule edit index.html [L]
