@@ -79,8 +79,8 @@ async function submitTransition() {
 async function loadPairs(transition) {
     if (!transition) transition = localStorage.getItem("transition");
     let headers = {
-        mode: "list", 
-        table: "pairs", 
+        mode: "list",
+        table: "pairs",
         data: {
             transition: transition
         }
@@ -94,72 +94,86 @@ async function loadPairs(transition) {
     let $table = $("#pairs tbody");
     $table.empty();
     if (!headers.data.source_segment && !headers.data.target_segment && !headers.data.transition) return;
-    
+
     let rows = await $getJSON(url, headers);
     if (!rows) return;
     console.log(rows.size()+" rows loaded")
 
     rows && rows.forEach(function(row) {
-        let $tableRow = $(jsonToTableRow(row, "pair", true));
+        let $tableRow = $(jsonToTableRow(row, "pair", mode()==='edit'));
         $table.append($tableRow);
     });
-	$("#pairs tbody .source_segment, #pairs tbody .target_segment").each(function() {
-        let link = `segment-graph.html?segment=${$(this).text().replace(" → ", ",")}`;
-        $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
-    });
-	$("#pairs tbody .transition").each(function() {
-        let link = `transition-graph.html?transition=${$(this).text().replace(" → ", ",")}`;
-        $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
-    });
-    
-    $('#pairs tbody td:not(.submit)').off("click")
-    $('#pairs tbody td:not(.submit)').on("dblclick", function() {
-        let $td = $(this);
-        let text = $td.text();
-        let $input = $(`<input class='edit' value='${text}' />`);
-        if ($(this).hasClass("environment") || $(this).hasClass("notes")) {
-            $input = $(`<textarea class='edit'>${text}</textarea>`);
-        }
-        $input.width($td.width());
-        $td.html($input);
-        $input.select();
-        $input.dblclick(function(e) {
-            return false;
+
+    if (mode() === "view") {
+        $("#pairs tbody .source_segment, #pairs tbody .target_segment").each(function() {
+            let link = `segment-graph.html?segment=${$(this).text().replace(" → ", ",")}`;
+            $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
         });
-        $input.blur(async function() {
-            let newText = $(this).val();
-            let $tr = $(this).parents("tr");
-            $td.text(newText);
-            if (text !== newText) {
-                let headers = {
-                    mode: "update",
-                    table: "pair"
-                }
-                let transition = $tr.find('.transition').text();
-                if (transition.includes(",")) transition = transition.split(",");
-                else if (transition.includes(" → ")) transition = transition.split(" → ");
-                else return;
+        $("#pairs tbody .transition").each(function() {
+            let link = `transition-graph.html?transition=${$(this).text().replace(" → ", ",")}`;
+            $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
+        });
+    }
 
-                let [source_language, target_language] = transition;
 
-                headers.data = {
-                    id: $tr.attr("pair"),
-                    source_segment: $tr.find('.source_segment').text(),
-                    target_segment: $tr.find('.target_segment').text(),
-                    source_language: source_language,
-                    target_language: target_language,
-                    environment: $tr.find('.environment').text(),
-                    notes: $tr.find('.notes').text(),
-                };
-
-                let result = await $get(url, headers);
-                if (result) loadPairs();
+    if (mode() === "edit") {
+        $('#pairs tbody td:not(.submit)').off("click")
+        $('#pairs tbody td:not(.submit)').on("dblclick", function() {
+            let $td = $(this);
+            let text = $td.text();
+            let $input = $(`<input class='edit' value='${text}' />`);
+            if ($(this).hasClass("environment") || $(this).hasClass("notes")) {
+                $input = $(`<textarea class='edit'>${text}</textarea>`);
             }
+            $input.width($td.width());
+            $td.html($input);
+            $input.select();
+            $input.dblclick(function(e) {
+                return false;
+            });
+            $input.blur(async function() {
+                let newText = $(this).val();
+                let $tr = $(this).parents("tr");
+                $td.text(newText);
+                if (text !== newText) {
+                    let headers = {
+                        mode: "update",
+                        table: "pair"
+                    }
+                    let transition = $tr.find('.transition').text();
+                    if (transition.includes(",")) transition = transition.split(",");
+                    else if (transition.includes(" → ")) transition = transition.split(" → ");
+                    else return;
+
+                    let [source_language, target_language] = transition;
+
+                    headers.data = {
+                        id: $tr.attr("pair"),
+                        source_segment: $tr.find('.source_segment').text(),
+                        target_segment: $tr.find('.target_segment').text(),
+                        source_language: source_language,
+                        target_language: target_language,
+                        environment: $tr.find('.environment').text(),
+                        notes: $tr.find('.notes').text(),
+                    };
+
+                    let result = await $get(url, headers);
+                    if (result) loadPairs();
+                }
+            });
+            $input.keydown(function(e) {
+                if (e.which === 13) $input.blur();
+            });
         });
-        $input.keydown(function(e) {
-            if (e.which === 13) $input.blur();
-        });
-    });
+    }
+
+    if (mode() === "view") {
+
+    }
+    if (mode() === "edit") {
+
+    }
+
 }
 
 async function loadData() {
@@ -202,77 +216,81 @@ async function loadData() {
     sortTables();
 }
 function modalFunctionality() {
-    $(document).on("click", "#pairs .plus", function() {
-        submitPair();
-    });
-    $(document).on("keyup", "#pairs thead input", function(e) {
-        if (e.which === 13) $('#pairs .plus').click();
-    });
-    $(document).on("click", "#pairs .ex", async function(e) {
-        $(this).parents("tr").remove(); // doing this here since it doesn't have to wait for result
 
-        let button = e.target;
-        let id = button.getAttribute('data-bs-id');
+    if (mode() === "edit") {
+        $(document).on("click", "#pairs .plus", function() {
+            submitPair();
+        });
+        $(document).on("keyup", "#pairs thead input", function(e) {
+            if (e.which === 13) $('#pairs .plus').click();
+        });
+        $(document).on("click", "#pairs .ex", async function(e) {
+            $(this).parents("tr").remove(); // doing this here since it doesn't have to wait for result
 
-        let headers = {mode: "remove", table: "pair", data: {id: id}};
-        let result = await $get(url, headers);
+            let button = e.target;
+            let id = button.getAttribute('data-bs-id');
 
-        if (result) loadPairs();
-    });
+            let headers = {mode: "remove", table: "pair", data: {id: id}};
+            let result = await $get(url, headers);
 
-    $("#segmentsModal, #languagesModal").click(async function() {
-        let modal = "#tagsInput";
-        let $modal = $(modal);
-        $modal.modal('show');
-        let table = $(this).text();
-        $(`${modal} .modal-title`).text(table);
-        table = table.toLowerCase();
-        let headers = {mode: "list", table: table};
-        let entries = await $getJSON(url, headers);
-        entries = JSON.stringify(entries).escapeHTML();
-        $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
-        table = table.slice(0, table.length-1);
-        let tagInput = document.querySelector('#tags');
-        let tagify = new Tagify(tagInput, {hooks: {
-            beforeRemoveTag: function(tags) {
-                return new Promise(async function(resolve, reject) {
-                    let headers = {
-                        mode: "remove", 
-                        table: table, 
-                        data: {
-                            id: tags[0].data.id,
-                        }
-                    };
-                    let response = await $get(url, headers);
-                    !response.includes(`Fatal error`) ? resolve() : reject()
-                })
-            }
-        }});
-        tagify.on('add', async function(e) {
-            let headers = {
-                mode: "insert", 
-                table: table, 
-                data: {
-                    value: e.detail.data.value,
-                }
-            };
-            await $get(url, headers);
-        }).on('edit:updated', async function(e) {
-            let headers = {
-                mode: "update", 
-                table: table, 
-                data: {
-                    id: e.detail.data.id, 
-                    value: e.detail.data.value,
-                }
-            };
-            await $get(url, hedaers);
+            if (result) loadPairs();
         });
 
-        $modal.on('hide.bs.modal', function(e) {
-            loadPairs();
+        $("#segmentsModal, #languagesModal").click(async function() {
+            let modal = "#tagsInput";
+            let $modal = $(modal);
+            $modal.modal('show');
+            let table = $(this).text();
+            $(`${modal} .modal-title`).text(table);
+            table = table.toLowerCase();
+            let headers = {mode: "list", table: table};
+            let entries = await $getJSON(url, headers);
+            entries = JSON.stringify(entries).escapeHTML();
+            $(`${modal} .modal-body`).html(`<input name='tags' id='tags' value='${entries}' data-role="tagsinput" class="form-control">`);
+            table = table.slice(0, table.length-1);
+            let tagInput = document.querySelector('#tags');
+            let tagify = new Tagify(tagInput, {hooks: {
+                beforeRemoveTag: function(tags) {
+                    return new Promise(async function(resolve, reject) {
+                        let headers = {
+                            mode: "remove",
+                            table: table,
+                            data: {
+                                id: tags[0].data.id,
+                            }
+                        };
+                        let response = await $get(url, headers);
+                        !response.includes(`Fatal error`) ? resolve() : reject()
+                    })
+                }
+            }});
+            tagify.on('add', async function(e) {
+                let headers = {
+                    mode: "insert",
+                    table: table,
+                    data: {
+                        value: e.detail.data.value,
+                    }
+                };
+                await $get(url, headers);
+            }).on('edit:updated', async function(e) {
+                let headers = {
+                    mode: "update",
+                    table: table,
+                    data: {
+                        id: e.detail.data.id,
+                        value: e.detail.data.value,
+                    }
+                };
+                await $get(url, hedaers);
+            });
+
+            $modal.on('hide.bs.modal', function(e) {
+                loadPairs();
+            });
         });
-    });
+
+    }
 
     $("#transitionsModal").click(async function() {
         let modal = "#tagsInput";
@@ -296,12 +314,20 @@ function modalFunctionality() {
         table = table.slice(0, table.length-1);
 
         let $transitionsTable = $(jsonToTable(entries, "transitions"));
-        $transitionsTable.find("thead").append(`<tr>
-            <th><span id='transition_source_language_span'></span></th>
-            <th><span id='transition_target_language_span'></span></th>
-            <th><span id='transition_citation_span'></span></th>
-            <th><button class='plus'></button></th>
-        </tr>`);
+
+        if (mode() === "edit") {
+            $transitionsTable.find("thead").append(`<tr>
+                <th><span id='transition_source_language_span'></span></th>
+                <th><span id='transition_target_language_span'></span></th>
+                <th><span id='transition_citation_span'></span></th>
+                <th><button class='plus'></button></th>
+            </tr>`);
+        }
+        if (mode() === "edit") {
+
+        }
+
+
         $transitionsTable.find("thead tr").each(function() {
             $(this).prepend(`<th></th>`);
         });
@@ -316,51 +342,53 @@ function modalFunctionality() {
             $(this).append(arr);
         });
 
-        $('#transition_source_language_span').html(`<input type="text" id='transition_source_language' />`);
-        $('#transition_target_language_span').html(`<input type="text" id='transition_target_language' />`);
-        $('#transition_citation_span').html(`<input type="text" id='transition_citation' />`);
-
-        $('#transitions .plus').click(() => {
-            submitTransition();
-        });
-
         sortTables();
-		
-		$("#transitions tbody .source_language, #transitions tbody .target_language").each(function() {
-            let link = `family-graph.html?language=${$(this).text()}`;
-            $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
-        });
 
-        $('#transitions tbody td:not(.submit,.view-td)').off("click")
-        $('#transitions tbody td:not(.submit,.view-td)').click(function() {
-            let $td = $(this);
-            let text = $td.text();
-            let $input = $(`<input class='edit' value='${text}' />`);
-            $td.html($input);
-            $input.select();
-            $input.click(function(e) { return false; });
-            $input.blur(async function() {
-                let newText = $(this).val();
-                let $tr = $(this).parents("tr");
-                $td.text(newText);
-                if (text !== newText) {
-                    let headers = {
-                        mode: "update",
-                        table: "transition"
-                    }
-                    headers.data = {
-                        id: $tr.attr("transition"),
-                        source_language: $tr.find('.source_language').text() || newText,
-                        target_language: $tr.find('.target_language').text() || newText,
-                        citation: $tr.find('.citation').text() || newText,
-                    };
-                    let result = await $get(url, headers);
-                    if (result) loadPairs();
-                }
+        if (mode() === "view") {
+            $("#transitions tbody .source_language, #transitions tbody .target_language").each(function() {
+                let link = `family-graph.html?language=${$(this).text()}`;
+                $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
             });
-            $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
-        });
+        }
+        if (mode() === "edit") {
+            $('#transition_source_language_span').html(`<input type="text" id='transition_source_language' />`);
+            $('#transition_target_language_span').html(`<input type="text" id='transition_target_language' />`);
+            $('#transition_citation_span').html(`<input type="text" id='transition_citation' />`);
 
+            $('#transitions .plus').click(() => {
+                submitTransition();
+            });
+
+            $('#transitions tbody td:not(.submit,.view-td)').off("click")
+            $('#transitions tbody td:not(.submit,.view-td)').click(function() {
+                let $td = $(this);
+                let text = $td.text();
+                let $input = $(`<input class='edit' value='${text}' />`);
+                $td.html($input);
+                $input.select();
+                $input.click(function(e) { return false; });
+                $input.blur(async function() {
+                    let newText = $(this).val();
+                    let $tr = $(this).parents("tr");
+                    $td.text(newText);
+                    if (text !== newText) {
+                        let headers = {
+                            mode: "update",
+                            table: "transition"
+                        }
+                        headers.data = {
+                            id: $tr.attr("transition"),
+                            source_language: $tr.find('.source_language').text() || newText,
+                            target_language: $tr.find('.target_language').text() || newText,
+                            citation: $tr.find('.citation').text() || newText,
+                        };
+                        let result = await $get(url, headers);
+                        if (result) loadPairs();
+                    }
+                });
+                $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
+            });
+        }
 
         $('#transitions .view').click(async function(e) {
             let transitionId = $(this).attr("transition");
@@ -369,13 +397,15 @@ function modalFunctionality() {
             $modal.modal('hide');
         });
 
-        $('#transitions .ex').click(async function(e) {
-            let button = e.target;
-            let id = button.getAttribute('data-bs-id');
-            let headers = {mode: "remove", table: "transition", data: {id: id}};
-            let result = await $get(url, headers);
-            if (result) $("#transitions").click();
-        });
+        if (mode() === "edit") {
+            $('#transitions .ex').click(async function(e) {
+                let button = e.target;
+                let id = button.getAttribute('data-bs-id');
+                let headers = {mode: "remove", table: "transition", data: {id: id}};
+                let result = await $get(url, headers);
+                if (result) $("#transitions").click();
+            });
+        }
 
         $modal.on('hide.bs.modal', function(e) {
             loadPairs();
@@ -383,7 +413,9 @@ function modalFunctionality() {
 
     });
 }
-
+function mode() {
+    return window.location.pathname.split("/").slice(-1)[0] || "view";
+}
 $(function() {
     $.ajaxSetup({cache: false});
 
@@ -439,18 +471,20 @@ $(function() {
         console.log(``, this);
     });
     router.add(`view`, function() {
-        console.log(`view`, this);
+        console.log(`view`);
+        $(`[href='view']`).hide()
+        $(`.submit`).hide()
+        $("#keyboard, #segmentsModal, #languagesModal").hide()
+
     });
     router.add(`edit`, function() {
-        console.log(`edit`, this);
-    });
-    router.add(`edit/:segment`, function(segment) {
-        console.log(`segment`, segment);
+        console.log(`edit`);
+        $(`[href='edit']`).hide();
     });
 
     router.addUriListener();
 
-    router.navigateTo(window.location.pathname.split("/").slice(-1)[0]);
+    router.navigateTo(mode());
 });
 </script>
 </head>
@@ -458,22 +492,22 @@ $(function() {
 <header>
     <h1>Diachron DB</h1>
     <div id='menu'>
-	    <button class="btn btn-primary" id="random">Random</button>
-	    <button class="btn btn-primary" id="keyboard">Keyboard</button>
-	    <button class="btn btn-primary"><a href='#view'>View</a></button>
-		<button class="btn btn-primary"><a href='#edit'>Edit</a></button>
-	    <button class="btn btn-primary" id="segmentsModal">Segments</button>
-	    <button class="btn btn-primary" id="languagesModal">Languages</button>
-	    <button class="btn btn-primary" id="transitionsModal">Transitions</button>
-	    <button class="btn btn-primary" id="about">About</button>
-	    <div class="btn-group" role="group" id="export">
-	        <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
-	        <ul class="dropdown-menu">
-	            <li><button class="dropdown-item" value='json'>JSON</button></li>
-	            <li><button class="dropdown-item" value='sql'>SQL</button></li>
-	            <li><button class="dropdown-item" value='csv'>CSV</button></li>
-	        </ul>
-	    </div>
+        <button class="btn btn-primary" id="random">Random</button>
+        <button class="btn btn-primary" id="keyboard">Keyboard</button>
+        <a href='view' class="btn btn-primary" role="button">View</a>
+        <a href='edit' class="btn btn-primary" role="button">Edit</a>
+        <button class="btn btn-primary" id="segmentsModal">Segments</button>
+        <button class="btn btn-primary" id="languagesModal">Languages</button>
+        <button class="btn btn-primary" id="transitionsModal">Transitions</button>
+        <button class="btn btn-primary" id="about">About</button>
+        <div class="btn-group" role="group" id="export">
+            <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">Export Data</button>
+            <ul class="dropdown-menu">
+                <li><button class="dropdown-item" value='json'>JSON</button></li>
+                <li><button class="dropdown-item" value='sql'>SQL</button></li>
+                <li><button class="dropdown-item" value='csv'>CSV</button></li>
+            </ul>
+        </div>
     </div>
     <div class="simple-keyboard"></div>
 </header>
