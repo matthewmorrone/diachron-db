@@ -106,11 +106,11 @@ async function loadPairs(transition) {
 
     if (mode() === "view") {
         $("#pairs tbody .source_segment, #pairs tbody .target_segment").each(function() {
-            let link = `segment-graph.html?segment=${$(this).text().replace(" → ", ",")}`;
+            let link = `graph.html?segment=${$(this).text().replace(" → ", ",")}`;
             $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
         });
         $("#pairs tbody .transition").each(function() {
-            let link = `transition-graph.html?transition=${$(this).text().replace(" → ", ",")}`;
+            let link = `graph.html?transition=${$(this).text().replace(" → ", ",")}`;
             $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
         });
     }
@@ -180,7 +180,7 @@ async function loadData() {
     let headers = {mode: 'list', table: 'segments'};
     let segments = await $getJSON(url, headers);
     segments = segments.map(segment => {
-        return [segment.id, segment.value];
+        return {id: segment.id, value: segment.value};
     });
     $(".search .source_segment select").html(jsonToOptions(segments));
     $(".search .target_segment select").html(jsonToOptions(segments));
@@ -188,8 +188,9 @@ async function loadData() {
     headers = {mode: 'list', table: 'transitions'};
     let transitions = await $getJSON(url, headers);
     transitions = transitions.map(transition => {
-        return [transition.id, transition.transition];
+        return {id: transition.id, value: transition.value};
     });
+    console.log(transitions)
     $(".search .transition select").html(jsonToOptions(transitions));
 
     let transition = localStorage.getItem("transition");
@@ -289,7 +290,6 @@ function modalFunctionality() {
                 loadPairs();
             });
         });
-
     }
 
     $("#transitionsModal").click(async function() {
@@ -302,7 +302,7 @@ function modalFunctionality() {
         let headers = {mode: "list", table: table};
         let entries = await $getJSON(url, headers);
         entries = entries.map(function(entry) {
-            let [source, target] = entry.transition.split(" → ")
+            let [source, target] = entry.value.split(" → ")
             return {
                 id: entry.id,
                 source_language: source,
@@ -346,7 +346,7 @@ function modalFunctionality() {
 
         if (mode() === "view") {
             $("#transitions tbody .source_language, #transitions tbody .target_language").each(function() {
-                let link = `family-graph.html?language=${$(this).text()}`;
+                let link = `graph.html?language=${$(this).text()}`;
                 $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
             });
         }

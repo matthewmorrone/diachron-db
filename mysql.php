@@ -22,29 +22,14 @@ if ($_GET) {
         break;
         case "graph":
             switch($type) {
-                case "language":
-                    $language_id = get_language(["value" => $language]);
-                    switch($query) {
-                        case "parent": echo json_encode(get_data(get_structure(get_parent($language)))); break;
-                        case "structure": echo json_encode(get_data(get_structure($language))); break;
-                        case "ancestors": echo json_encode(get_data(get_structure(get_ancestors($language)))); break;
-                        case "children": echo json_encode(get_data(get_structure(get_children($language)))); break;
-                        case "descendants": echo json_encode(get_data(get_structure(get_descendants($language)))); break;
-                        case "family": echo json_encode(get_data(get_structure(get_family($language)))); break;
-                        case "structure_all": echo json_encode(get_data(get_structure_all($language))); break;
-                    }
-                break;
-                case 'segment':
-                    echo json_encode(generate_segment_data($data));
-                break;
-                case "transition":
-                    echo json_encode(generate_transition_data($data));
-                break;
+                case "language":   echo json_encode(generate_family_data($data)); break;
+                case 'segment':    echo json_encode(generate_segment_data($data));    break;
+                case "transition": echo json_encode(generate_transition_data($data)); break;
             }
         break;
         case "list":
             switch($table) {
-                case "pairs":       echo json_encode(query_pairs($data));      break;
+                case "pairs":       echo json_encode(query_pairs($data));     break;
                 case "segments":    echo json_encode(get_segments($data));    break;
                 case "languages":   echo json_encode(get_languages($data));   break;
                 case "transitions": echo json_encode(get_transitions($data)); break;
@@ -52,18 +37,18 @@ if ($_GET) {
         break;
         case "insert":
             switch($table) {
-                case "pair":        echo add_pair($data);              break;
-                case "segment":     echo add_segment($data);           break;
-                case "language":    echo add_language($data);          break;
-                case "transition":  echo get_or_add_transition($data); break;
+                case "pair":       echo add_pair($data);              break;
+                case "segment":    echo add_segment($data);           break;
+                case "language":   echo add_language($data);          break;
+                case "transition": echo get_or_add_transition($data); break;
             }
         break;
         case "update":
             switch($table) {
-                case "pair":        echo update_pair($data);       break;
-                case "segment":     echo update_segment($data);    break;
-                case "language":    echo update_language($data);   break;
-                case "transition":  echo update_transition($data); break;
+                case "pair":       echo update_pair($data);       break;
+                case "segment":    echo update_segment($data);    break;
+                case "language":   echo update_language($data);   break;
+                case "transition": echo update_transition($data); break;
             }
         break;
         case "remove":
@@ -259,11 +244,15 @@ function reset_database() {
     $query = "SET FOREIGN_KEY_CHECKS = 1";
     do_query($query);
 }
+function generate_family_data($data) {
+    if (!$data["value"]) return "language not provided to generate_family_data";
+    $language = $data["value"];
+    return get_data(get_structure(get_family($language)));
+}
 function generate_segment_data($data) {
     if (!$data["value"]) return "segment not provided to generate_segment_data";
     $data = ["source_segment" => $data["value"], "target_segment" => $data["value"]];
     $pairs = query_pairs($data);
-
     $result = [];
     foreach($pairs as $pair) {
         $result[] = $pair["source_segment"];
@@ -282,6 +271,7 @@ function generate_segment_data($data) {
         $result[] = ["data" => [
             "source" => $pair["source_segment"],
             "target" => $pair["target_segment"],
+            "label" => $pair["transition"],
             "transition" => $pair["transition"],
             "source_language" => $source_label,
             "target_language" => $target_label,
@@ -312,6 +302,7 @@ function generate_transition_data($data) {
             "transition" => $pair["source_segment"]."→".$pair["target_segment"],
             "source" => $pair["source_segment"],
             "target" => $pair["target_segment"],
+            "label" => $pair["environment"],
             "environment" => $pair["environment"],
         ]];
     }
@@ -705,10 +696,10 @@ AND transitions.target_language_id = target_language.id
     if ($limit) $query .= "LIMIT $limit";
     $result = get_query($query);
     foreach($result as $row) {
-        $results[] = ["id" => $row["id"], "transition" => $row["transition"], "citation" => $row["citation"]];
+        $results[] = ["id" => $row["id"], "value" => $row["transition"], "citation" => $row["citation"]];
     }
     usort($results, function($a, $b) {
-        return $a['transition'] <=> $b['transition'];
+        return $a['value'] <=> $b['value'];
     });
     return $results;
 }

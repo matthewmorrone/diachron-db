@@ -1,0 +1,316 @@
+<html>
+<head>
+<title>Graph | Diachron DB</title>
+<meta charset='UTF-8'>
+<link href='https://www.matthewmorrone.com/psi-fff.ico' rel='shortcut icon' type='image/x-icon'>
+<link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-white.ico' id='psi-white'>
+<link rel='shortcut icon' href='https://www.matthewmorrone.com/psi-black.ico' id='psi-black'>
+<style>
+@import 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css';
+</style>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/js/bootstrap.min.js"></script>
+<script src='https://matthewmorrone.com/icon.js'></script>
+<script src='https://matthewmorrone.com/jquery.js'></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.22.1/cytoscape.min.js"></script>
+<script src="https://unpkg.com/layout-base/layout-base.js"></script>
+<script src="https://unpkg.com/avsdf-base/avsdf-base.js"></script>
+<script src="https://ivis-at-bilkent.github.io/cytoscape.js-avsdf/cytoscape-avsdf.js"></script>
+<script src="https://cdn.rawgit.com/cpettitt/dagre/v0.7.4/dist/dagre.min.js"></script>
+<script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-dagre/1.5.0/cytoscape-dagre.js"></script>
+<script src="https://unpkg.com/klayjs@0.4.1/klay.js"></script>
+<script src="https://cytoscape.org/cytoscape.js-klay/cytoscape-klay.js"></script>
+<script src="https://unpkg.com/layout-base/layout-base.js"></script>
+<script src="https://unpkg.com/cose-base/cose-base.js"></script>
+<script src="https://unpkg.com/cytoscape-layout-utilities/cytoscape-layout-utilities.js"></script>
+<script src="https://ivis-at-bilkent.github.io/cytoscape.js-fcose/cytoscape-fcose.js"></script>
+<script src="https://cdn.rawgit.com/cytoscape/cytoscape.js-cose-bilkent/1.6.5/cytoscape-cose-bilkent.js"></script>
+<script src="https://unpkg.com/webcola/WebCola/cola.js"></script>
+<script src="https://cytoscape.org/cytoscape.js-cola/cytoscape-cola.js"></script>
+<script src="https://unpkg.com/layout-base@1.0.2/layout-base.js"></script>
+<script src="https://unpkg.com/avsdf-base/avsdf-base.js"></script>
+<script src="https://unpkg.com/cose-base@1.0.3/cose-base.js"></script>
+<script src="https://unpkg.com/cytoscape-graphml/cytoscape-graphml.js"></script>
+<script src="https://raw.githack.com/iVis-at-Bilkent/cytoscape.js-layvo/unstable/cytoscape-layvo.js"></script>
+<script src="https://ivis-at-bilkent.github.io/cytoscape.js-cise/cytoscape-cise.js"></script>
+<script src="https://unpkg.com/weaverjs@1.2.0/dist/weaver.min.js"></script>
+<script src="https://cytoscape.org/cytoscape.js-spread/cytoscape-spread.js"></script>
+<script src="https://cytoscape.org/cytoscape.js-euler/cytoscape-euler.js"></script>
+<script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/demo/forTestingCose/cytoscape-cosep-port.js"></script>
+<script src="https://ivis-at-bilkent.github.io/cytoscape.js-cosep/cytoscape-cosep.js"></script>
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-edge-editing -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-node-editing -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-grid-guide -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-expand-collapse -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-context-menus -->
+<!-- https://github.com/cytoscape/cytoscape.js-cxtmenu -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-layout-utilities -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-view-utilities -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-layvo -->
+<!-- https://github.com/iVis-at-Bilkent/cytoscape.js-undo-redo -->
+<!-- https://github.com/iVis-at-Bilkent/layland -->
+<!-- https://github.com/cytoscape/cytoscape.js-qtip -->
+<!-- https://github.com/cytoscape/cytoscape.js/tree/master/documentation/demos/linkout-example -->
+<!-- https://github.com/cytoscape/cytoscape.js/tree/master/documentation/demos/animated-bfs -->
+<script src='js/utils.js'></script>
+<script src='index.js'></script>
+<script type="module">
+let url = 'mysql.php';
+function populateSelect(id, options) {
+    let $select = $(`#${id}`)
+    $select.append(`<option></option>`);
+    options.forEach(function(entry) {
+        let [key, val] = [entry.id, entry.value];
+        $select.append(`<option>${val}</option>`);
+    });
+}
+async function loadSegments() {
+    let headers = {mode: 'list', table: 'segments'};
+    let segments = await $getJSON(url, headers);
+    segments = segments.map(segment => {
+        return {id: segment.id, value: segment.value};
+    });
+    return segments;
+}
+async function loadSegmentData(segment) {
+    segment = segment || $("#segments").val();
+    let headers = {mode: 'graph', type: 'segment', data: {value: segment}};
+    let data = await $getJSON(url, headers);
+    return data;
+}
+async function loadLanguages() {
+    let headers = {mode: 'list', table: 'languages'};
+    let languages = await $getJSON(url, headers);
+    languages = languages.map(language => {
+        return {id: language.id, value: language.value};
+    });
+    return languages;
+}
+async function loadLanguageData(language) {
+    let headers = {mode: "graph", type: "language", data: {value: language}};
+    let data = await $getJSON(url, headers);
+    return data;
+}
+async function loadTransitions() {
+    let headers = {mode: 'list', table: 'transitions'};
+    let transitions = await $getJSON(url, headers);
+    transitions = transitions.map(transition => {
+        return {id: transition.id, value: transition.value};
+    });
+    return transitions;
+}
+async function loadPairs(transition) {
+    transition = transition || $("#transitions").val();
+    let headers = {mode: 'graph', type: 'transition', data: {value: transition}};
+    let data = await $getJSON(url, headers);
+    return data;
+}
+
+function cytoscapeData(elements) {
+    // if (!elements) return null;
+    let layout = $("#layout").val();
+    let curveStyle = $("#curveStyle").val();
+    let data = {
+        container: document.getElementById('cy'),
+        elements: elements,
+        wheelSensitivity: 0.2,
+        selectionType: 'single',
+        layout: {
+            name: layout,
+            animate: true,
+            nodeDimensionsIncludeLabels: true,
+            fit: true,
+            padding: 20,
+            avoidOverlap: true,
+            avoidOverlapPadding: 10,
+        },
+        style: fetch('cy-style.json').then(res => res.json()),
+    };
+    return data;
+}
+function cytoscapeFunctionality(cy) {
+    /*
+    cy.animate({
+        pan: cy.nodes(`[id = "${language}"]`).position(),
+    }, {
+        duration: 500
+    });
+    */
+    cy.on('click', 'node', async function() {
+        let segment = this.id();
+        $("#segments").val(segment).trigger("change");
+    });
+}
+function emptyGraph(cy) {
+    cy = cytoscape([]);
+    window.history.pushState("", "", "graph.html");
+    document.title = `Graph | Diachron DB`
+}
+async function doStuff() {
+    let transitions = await loadTransitions();
+    populateSelect(`transitions`, transitions);
+
+    let languages = await loadLanguages();
+    populateSelect(`languages`, languages);
+
+    let segments = await loadSegments();
+    populateSelect(`segments`, segments);
+
+    cytoscape.warnings(false);
+    let data, cy = cytoscape(data);
+    cytoscapeFunctionality(cy);
+    window.addEventListener('resize', function(e) {
+        cy.center();
+    });
+    $("#segments").change(async function() {
+        $("#languages, #transitions").val("");
+        let segment = $("#segments").val();
+        if (!segment) {
+            emptyGraph(cy);
+            return;
+        }
+        let segmentData = await loadSegmentData(segment);
+        console.log("segmentData: ", segmentData);
+        data = cytoscapeData(segmentData);
+        cy = cytoscape(data);
+        cytoscapeFunctionality(cy);
+        cy.nodes(`[id = "${segment}"]`).style('background-color', 'gold');
+        window.history.pushState("", "", "graph.html?segment="+segment);
+        document.title = `${segment} | Segment Graph | Diachron DB`
+    });
+    $("#languages").change(async function() {
+        $("#segments, #transitions").val("")
+        let language = $("#languages").val();
+        if (!language) {
+            emptyGraph(cy);
+            return;
+        }
+        let languageData = await loadLanguageData(language);
+        console.log("languageData: ", languageData);
+        data = cytoscapeData(languageData);
+        cy = cytoscape(data);
+        cytoscapeFunctionality(cy);
+        cy.nodes(`[id = "${language}"]`).style('background-color', 'gold');
+        window.history.pushState("", "", "graph.html?language="+language);
+        document.title = `${language} | Language Graph | Diachron DB`
+    });
+    $("#transitions").change(async function() {
+        $("#segments, #languages").val("");
+        let transition = $("#transitions").val();
+        if (!transition) {
+            emptyGraph(cy);
+            return;
+        }
+        let transitionData = await loadPairs(transition);
+        console.log("transitionData: ", transitionData);
+        data = cytoscapeData(transitionData);
+        cy = cytoscape(data);
+        cytoscapeFunctionality(cy);
+        window.history.pushState({}, $("#transitions").val(), "graph.html?transition="+transition);
+        document.title = `${transition} | Transition Graph | Diachron DB`
+    });
+    $("#edgeLabels").click(function() {
+        cy.style().selector('edge').style({
+            'label': $(this).is(':checked') ? 'data(label)' : ''
+        }).update();
+    });
+    $("#curveStyle").change(function() {
+        cy.style().selector('edge').style({
+            'curve-style': $("#curveStyle").val()
+        }).update();
+    });
+    $("#layout").change(function() {
+        let layoutName = $(this).val();
+        let layoutData = {
+            name: layoutName,
+            animate: true
+        };
+        if (layoutName === "avsdf") delete layoutData.animate;
+        let layout = cy.layout(layoutData);
+        layout.run();
+    });
+
+    let segment = get()?.segment;
+    let language = get()?.language;
+    let transition = get()?.transition?.replace(",", " → ");
+
+    if (transition) {
+        console.log(`transition: ${transition}`)
+        $("#transitions").val(transition).trigger("change");
+    }
+    else if (language) {
+        console.log(`language: ${language}`)
+        $("#languages").val(language).trigger("change");
+    }
+    else if (segment) {
+        console.log(`segment: ${segment}`)
+        $("#segments").val(segment).trigger("change");
+    }
+    else {
+        emptyGraph(cy);
+    }
+
+}
+$(function() {
+    $("[rel='import']").each(async function() {
+        let url = $(this).attr("href");
+        let result = await $get(url);
+        $(this).replaceWith(result);
+    });
+    doStuff();
+});
+</script>
+<style>
+*::-webkit-scrollbar {
+    display: none;
+}
+#cy {
+    width: 100%;
+    height: 100%;
+    display: block;
+    margin: auto;
+}
+</style>
+</head>
+<body>
+<select id="segments"></select>
+<select id="languages"></select>
+<select id="transitions"></select>
+<select id="layout">
+    <option>random</option>
+    <optgroup label="Geometric">
+        <option>grid</option>
+        <option>circle</option><!-- better for segments -->
+        <option>concentric</option>
+        <option>avsdf</option>
+    </optgroup>
+    <optgroup label="Hierarchical">
+        <option>dagre</option><!-- better for transitions -->
+        <option>breadthfirst</option>
+        <option selected>klay</option><!-- better for families -->
+    </optgroup>
+    <optgroup label="Force-directed">
+        <option>fcose</option>
+        <option>cose-bilkent</option>
+        <option>cose</option>
+        <option>cosep</option>
+        <option>cola</option>
+        <option>euler</option>
+        <option>spread</option>
+    </optgroup>
+</select>
+<select id="curveStyle">
+    <option selected>bezier</option>
+    <option>unbundled-bezier</option>
+    <option>multi-unbundled-bezier</option>
+    <option>straight</option>
+    <option>haystack</option>
+    <option>segments</option>
+    <option>taxi</option>
+    <option>straight-triangle</option>
+</select>
+<input class="form-check-input" type="checkbox" id="edgeLabels" checked>
+<label class="form-check-label" for="edgeLabels">Edge Labels</label>
+<div id='cy'></div>
+<link rel="import" href="modals/error.html">
+</body>
+</html>

@@ -25,6 +25,15 @@ function showError(e) {
     $(`${modal} .modal-body`).html(e.responseText);
     $(`${modal} .modal-body`).find("br").remove();
 }
+function get() {
+    let qs = document.location.search;
+    qs = qs.split('+').join(' ');
+    let params = {}, tokens, re = /[?&]?([^=]+)=([^&]*)/g;
+    while (tokens = re.exec(qs)) {
+        params[decodeURIComponent(tokens[1])] = decodeURIComponent(tokens[2]);
+    }
+    return params;
+}
 async function $get(url, data) {
     let result = false;
     try {
@@ -49,7 +58,7 @@ function jsonToSelect(options, id) {
     let result = `<select id='${id}'>`;
         result += `<option></option>`;
     options.forEach(function(option) {
-        let [key, val] = option;
+        let [key, val] = [option.id, option.value];
         result += `<option value='${key}'>${val}</option>`;
     });
     result += '</select>';
@@ -58,7 +67,7 @@ function jsonToSelect(options, id) {
 function jsonToOptions(options, id) {
     let result = `<option></option>`;
     options.forEach(function(option) {
-        let [key, val] = option;
+        let [key, val] = [option.id, option.value];
         result += `<option value='${key}'>${val}</option>`;
     });
     return result;
@@ -67,7 +76,7 @@ function jsonToDataList(options, id) {
     let result = `<input type=text name=${id} list=${id} />`;
         result += `<datalist id='${id}'>`;
     options.forEach(function(option) {
-        let [key, val] = option;
+        let [key, val] = [option.id, option.value];
         result += `<option data-id='${key}'>${val}</option>`;
     });
     result += '</datalist>';
