@@ -58,7 +58,7 @@ let url = 'mysql.php';
 function populateSelect(id, options) {
     let $select = $(`#${id}`)
     $select.append(`<option></option>`);
-    options.forEach(function(entry) {
+    options.forEach(entry => {
         let [key, val] = [entry.id, entry.value];
         $select.append(`<option>${val}</option>`);
     });
@@ -244,7 +244,7 @@ async function doStuff() {
     cytoscape.warnings(false);
     let data, cy = cytoscape(data);
     cytoscapeFunctionality(cy);
-    $("#segments").change(async function() {
+    $("#segments").change(async () => {
         $("#languages, #transitions").val("");
         let segment = $("#segments").val();
         if (!segment) {
@@ -260,7 +260,7 @@ async function doStuff() {
         document.title = `${segment} | Segment Graph | Diachron DB`
         window.parent.postMessage(document.title, '*');
     });
-    $("#languages").change(async function() {
+    $("#languages").change(async () => {
         $("#segments, #transitions").val("")
         let language = $("#languages").val();
         if (!language) {
@@ -277,7 +277,7 @@ async function doStuff() {
         document.title = `${language} | Language Graph | Diachron DB`
         window.parent.postMessage(document.title, '*');
     });
-    $("#transitions").change(async function() {
+    $("#transitions").change(async () => {
         $("#segments, #languages").val("");
         let transition = $("#transitions").val();
         if (!transition) {
@@ -293,18 +293,18 @@ async function doStuff() {
         document.title = `${transition} | Transition Graph | Diachron DB`
         window.parent.postMessage(document.title, '*');
     });
-    $("#edgeLabels").click(function() {
+    $("#edgeLabels").click(() => {
         cy.style().selector('edge').style({
-            'label': $(this).is(':checked') ? 'data(label)' : ''
+            'label': $("#edgeLabels").is(':checked') ? 'data(label)' : ''
         }).update();
     });
-    $("#curveStyle").change(function() {
+    $("#curveStyle").change(() => {
         cy.style().selector('edge').style({
             'curve-style': $("#curveStyle").val()
         }).update();
     });
-    $("#layout").change(function() {
-        let layoutName = $(this).val();
+    $("#layout").change(() => {
+        let layoutName = $("#layout").val();
         let layoutData = {
             name: layoutName,
             animate: true
@@ -335,7 +335,7 @@ async function doStuff() {
     }
 }
 $(function() {
-    $("[rel='import']").each(async function() {
+    $("[rel='import']").each(async function(e) {
         let url = $(this).attr("href");
         let result = await $get(url);
         $(this).replaceWith(result);

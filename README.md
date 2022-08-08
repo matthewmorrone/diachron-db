@@ -26,7 +26,10 @@ $database = (isset($database) ? $database : "diachron");
 + [cytoscape.js](https://js.cytoscape.org/)
 
 ### Enhancements: 
-+ switch over as much database interaction as possible to prepared statements (apparently only PDO supports named parameters?)
++ use keyboard in view mode (will probably require combobox implementation)
++ better dropdowns, might have to suck it up and just accept autocomplete
++ options for search operators: and, or, not, like, in, etc
++ save source and target segments to localStorage
 + option to toggle between showing transition and source language → target language
 + add depth option (will definitely need a circularity check, see segment "an")
 + for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
@@ -38,10 +41,13 @@ $database = (isset($database) ? $database : "diachron");
 + dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
 
 ### Refactoring:
-+ when modifying something and that something already exists, merge rather than reject
++ switch over as much database interaction as possible to prepared statements (apparently only PDO supports named parameters?)
++ when modifying something that already exists, merge rather than reject
++ switch to using arrow functions as much as possible (will need to use e.target)
 
 ### Known Bugs:
 + figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
++ I'd like to clear dropdowns on backspace instead of escape, but backspace doesn't appear to fire as a key event while a dropdown is open
 
 ### Inventory Calculation
 + consider having separate phone table rather than just segment table

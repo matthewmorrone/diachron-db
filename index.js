@@ -57,7 +57,7 @@ async function $getJSON(url, data) {
 function jsonToSelect(options, id) {
     let result = `<select id='${id}'>`;
         result += `<option></option>`;
-    options.forEach(function(option) {
+    options.forEach(option => {
         let [key, val] = [option.id, option.value];
         result += `<option value='${key}'>${val}</option>`;
     });
@@ -66,7 +66,7 @@ function jsonToSelect(options, id) {
 }
 function jsonToOptions(options, id) {
     let result = `<option></option>`;
-    options.forEach(function(option) {
+    options.forEach(option => {
         let [key, val] = [option.id, option.value];
         result += `<option value='${key}'>${val}</option>`;
     });
@@ -75,7 +75,7 @@ function jsonToOptions(options, id) {
 function jsonToDataList(options, id) {
     let result = `<input type=text name=${id} list=${id} />`;
         result += `<datalist id='${id}'>`;
-    options.forEach(function(option) {
+    options.forEach(option => {
         let [key, val] = [option.id, option.value];
         result += `<option data-id='${key}'>${val}</option>`;
     });
@@ -148,7 +148,7 @@ async function exportData(format) {
         const zip = new JSZip();
         const folder = zip.folder("diachron");
 
-        data.forEach(function(datum) {
+        data.forEach(datum => {
             datum = datum.trim();
             datum = datum.split("\n");
             let filename = datum[0]+".csv";
@@ -157,7 +157,7 @@ async function exportData(format) {
             folder.file(filename, contents);
         });
 
-        zip.generateAsync({type:"blob"}).then(function(content) {
+        zip.generateAsync({type: "blob"}).then(content => {
             saveAs(content, "diachron.zip");
         });
     }
@@ -165,7 +165,7 @@ async function exportData(format) {
 
 function sortDropdown($sel) {
     let $options = $sel.find(`option:not(:first-child)`);
-    $options.detach().sort(function(a, b) {
+    $options.detach().sort((a, b) => {
         let at = $(a).text();
         let bt = $(b).text();
         return (at > bt) ? 1: ((at < bt) ? -1 : 0);

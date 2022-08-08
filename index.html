@@ -60,7 +60,7 @@ async function submitPair() {
     if (result) {
         await loadPairs();
         $(`[pair='${result}']`).addClass("focus")
-        setTimeout(function() {
+        setTimeout(() => {
             $(`[pair='${result}']`).removeClass("focus")
         }, 2000)
     }
@@ -97,10 +97,10 @@ async function loadPairs(transition) {
 
     let rows = await $getJSON(url, headers);
     if (!rows) return;
-    console.log(`${transition}: ${rows.size()} rows loaded`)
+    console.log(`${rows.size()} rows loaded`)
 
     $table.empty();
-    rows && rows.forEach(function(row) {
+    rows && rows.forEach(row => {
         let $tableRow = $(jsonToTableRow(row, "pair", mode() === 'edit'));
         $table.append($tableRow);
     });
@@ -128,7 +128,7 @@ async function loadPairs(transition) {
             $input.width($td.width());
             $td.html($input);
             $input.select();
-            $input.dblclick(function(e) {
+            $input.dblclick(e => {
                 return false;
             });
             $input.blur(async function() {
@@ -161,7 +161,7 @@ async function loadPairs(transition) {
                     if (result) loadPairs();
                 }
             });
-            $input.keydown(function(e) {
+            $input.keydown(e => {
                 if (e.which === 13) $input.blur();
             });
         });
@@ -188,7 +188,12 @@ async function loadData() {
     $(".search .transition select").html(jsonToOptions(transitions));
 
     let transition = localStorage.getItem("transition");
-    $(".search select").on("change", async function() {
+    $(".search select").on("keyup", function(e) {
+        if (e.which === 27) {
+            $(this).val("").trigger("change");
+        }
+    })
+    $(".search select").on("change", async () => {
         let transition = $(".search .transition select").find("option:selected").text();
         localStorage.setItem("transition", transition);
         loadPairs(transition);
@@ -201,8 +206,7 @@ async function loadData() {
         $(this).val($(".search .transition select").selected()).select();
     });
 
-    $("input").on("focus", function(e) {
-        $selectedInput = $(this);
+    $("input").on("focus", e => {
         keyboard.setOptions({
             inputName: $(e)[0].target.id
         });
@@ -213,10 +217,10 @@ async function loadData() {
 function modalFunctionality() {
 
     if (mode() === "edit") {
-        $(document).on("click", "#pairs .plus", function() {
+        $(document).on("click", "#pairs .plus", () => {
             submitPair();
         });
-        $(document).on("keyup", "#pairs thead input", function(e) {
+        $(document).on("keyup", "#pairs thead input", e => {
             if (e.which === 13) $('#pairs .plus').click();
         });
         $(document).on("click", "#pairs .ex", async function(e) {
@@ -245,8 +249,8 @@ function modalFunctionality() {
             table = table.slice(0, table.length-1);
             let tagInput = document.querySelector('#tags');
             let tagify = new Tagify(tagInput, {hooks: {
-                beforeRemoveTag: function(tags) {
-                    return new Promise(async function(resolve, reject) {
+                beforeRemoveTag: tags => {
+                    return new Promise(async (resolve, reject) => {
                         let headers = {
                             mode: "remove",
                             table: table,
@@ -259,7 +263,7 @@ function modalFunctionality() {
                     })
                 }
             }});
-            tagify.on('add', async function(e) {
+            tagify.on('add', async e => {
                 let headers = {
                     mode: "insert",
                     table: table,
@@ -268,7 +272,7 @@ function modalFunctionality() {
                     }
                 };
                 await $get(url, headers);
-            }).on('edit:updated', async function(e) {
+            }).on('edit:updated', async e => {
                 let headers = {
                     mode: "update",
                     table: table,
@@ -280,7 +284,7 @@ function modalFunctionality() {
                 await $get(url, hedaers);
             });
 
-            $modal.on('hide.bs.modal', function(e) {
+            $modal.on('hide.bs.modal', e => {
                 // loadPairs();
             });
         });
@@ -295,7 +299,7 @@ function modalFunctionality() {
         table = table.toLowerCase();
         let headers = {mode: "list", table: table};
         let entries = await $getJSON(url, headers);
-        entries = entries.map(function(entry) {
+        entries = entries.map(entry => {
             let [source, target] = entry.value.split(" → ")
             return {
                 id: entry.id,
@@ -356,7 +360,7 @@ function modalFunctionality() {
                 let $input = $(`<input class='edit' value='${text}' />`);
                 $td.html($input);
                 $input.select();
-                $input.click(function(e) { return false; });
+                $input.click(e => {return false;});
                 $input.blur(async function() {
                     let newText = $(this).val();
                     let $tr = $(this).parents("tr");
@@ -376,7 +380,7 @@ function modalFunctionality() {
                         if (result) loadPairs();
                     }
                 });
-                $input.keydown(function(e) { if (e.which === 13) $input.blur(); });
+                $input.keydown(e => { if (e.which === 13) $input.blur(); });
             });
         }
 
@@ -388,7 +392,7 @@ function modalFunctionality() {
         });
 
         if (mode() === "edit") {
-            $('#transitions .ex').click(async function(e) {
+            $('#transitions .ex').click(async e => {
                 let button = e.target;
                 let id = button.getAttribute('data-bs-id');
                 let headers = {mode: "remove", table: "transition", data: {id: id}};
@@ -397,7 +401,7 @@ function modalFunctionality() {
             });
         }
 
-        $modal.on('hide.bs.modal', function(e) {
+        $modal.on('hide.bs.modal', e => {
             // loadPairs();
         });
 
@@ -406,7 +410,7 @@ function modalFunctionality() {
 function mode() {
     return window.location.pathname.split("/").slice(-1)[0] || "view";
 }
-$(function() {
+$(() => {
     $.ajaxSetup({cache: false});
 
     loadData();
@@ -419,11 +423,11 @@ $(function() {
     });
 
     makeKeyboard();
-    $("#keyboard").click(function() {
+    $("#keyboard").click(() => {
         $('.simple-keyboard').slideToggle();
     });
 
-    $("#about").click(function() {
+    $("#about").click(() => {
         let modal = "#aboutModal";
         let $modal = $(modal);
         $modal.modal('show');
@@ -431,7 +435,7 @@ $(function() {
         $(`${modal} .modal-title`).text(table);
     });
 
-    $("#random").click(function() {
+    $("#random").click(() => {
         randomTransition();
     });
 
@@ -455,11 +459,11 @@ $(function() {
 
             $(`${modal} .modal-body`).html($iframe);
 
-            window.addEventListener('message', function(e) {
+            window.addEventListener('message', e => {
                 $(`${modal} .modal-title`).text(e.data);
             });
 
-            $modal.on('hide.bs.modal', function(e) {
+            $modal.on('hide.bs.modal', e => {
                 $iframe.remove();
             });
             
@@ -470,16 +474,16 @@ $(function() {
     let router = new Router({
         mode: 'history',
         root: 'diachron-db',
-        page404: function(path) {
+        page404: path => {
             console.log('"/' + path + '" Page not found');
         }
     });
-    router.add(`view`, function() {
+    router.add(`view`, () => {
         $(`[href='view']`).hide()
         $(`.submit`).hide()
         $("#keyboard, #segmentsModal, #languagesModal").hide()
     });
-    router.add(`edit`, function() {
+    router.add(`edit`, () => {
         $(`[href='edit']`).hide();
     });
 
