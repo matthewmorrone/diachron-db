@@ -8,6 +8,13 @@
 select:focus, input:focus, textarea:focus {
     outline: none;
 }
+.focus, .focus td {
+    background-color: 1px solid #4D90FE;
+    border: 1px solid #4D90FE;
+    box-shadow: 5px 5px 5px #4D90FE;
+    transition: none;
+}
+
 th {
     text-align: center;
 }
@@ -29,11 +36,10 @@ a {
     float: left;
     width: 1.5em;
     height: 1.5em;
-    color: #000;
+    color: black;
     opacity: .5;
     border: 0;
     border-radius: 0.5rem;
-    background-repeat: no-repeat;
 }
 .ex {
     background: url('img/ex.svg') no-repeat;
@@ -42,7 +48,9 @@ a {
     background: url('img/plus.svg') no-repeat;
 }
 .view {
-    background: url('img/view.svg') no-repeat;
+    background: url('img/binoculars.svg') no-repeat;
+    background-position: right;
+
 }
 
 body {

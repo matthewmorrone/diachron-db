@@ -23,7 +23,9 @@ if ($_GET) {
         case "graph":
             switch($type) {
                 case "language":   echo json_encode(generate_family_data($data)); break;
-                case 'segment':    echo json_encode(generate_segment_data($data));    break;
+                case 'segment':
+                    echo json_encode(generate_segment_data($data));
+                break;
                 case "transition": echo json_encode(generate_transition_data($data)); break;
             }
         break;
@@ -213,9 +215,15 @@ function exportCsv($tables=false, $backup_name=false) {
     header("Content-Type: application/csv;");
     return $content;
 }
+function sanitize($query) {
+    // not sure how useful this actually is
+    GLOBAL $mysqli;
+    return strip_tags(htmlspecialchars($mysqli->real_escape_string(trim($query))));
+}
 function get_query($query) {
     GLOBAL $mysqli, $debug;
     if ($debug) echo "$query<br>";
+    // $query = sanitize($query);
     log_reads($query);
     $result = $mysqli->query($query) or die($mysqli->error);
     while($row = $result->fetch_assoc()) $results[] = $row;
@@ -224,6 +232,7 @@ function get_query($query) {
 function do_query($query) {
     GLOBAL $mysqli, $debug;
     if ($debug) echo "$query<br>";
+    // $query = sanitize($query);
     log_writes($query);
     $mysqli->query($query) or die($mysqli->error);
     return $mysqli;
@@ -249,8 +258,16 @@ function generate_family_data($data) {
     $language = $data["value"];
     return get_data(get_structure(get_family($language)));
 }
+function array_multisearch($arr, $source, $target) {
+    foreach ($arr as $key => $val) {
+        if ($val['data']['source'] === $source and $val['data']['target'] === $target) {
+            return $key;
+        }
+    }
+}
 function generate_segment_data($data) {
     if (!$data["value"]) return "segment not provided to generate_segment_data";
+    $weighted = $data["weighted"];
     $data = ["source_segment" => $data["value"], "target_segment" => $data["value"]];
     $pairs = query_pairs($data);
     $result = [];
@@ -268,14 +285,29 @@ function generate_segment_data($data) {
         $transition = explode(" → ", $pair["transition"]);
         $source_label = $transition[0];
         $target_label = $transition[1];
-        $result[] = ["data" => [
-            "source" => $pair["source_segment"],
-            "target" => $pair["target_segment"],
-            "label" => $pair["transition"],
-            "transition" => $pair["transition"],
-            "source_language" => $source_label,
-            "target_language" => $target_label,
-        ]];
+        if ($weighted === true) {
+            $key = array_multisearch($result, $pair["source_segment"], $pair["target_segment"]);
+            if ($key) {
+                $result[$key]["data"]["weight"]++;
+            }
+            else {
+                $result[] = ["data" => [
+                    "source" => $pair["source_segment"],
+                    "target" => $pair["target_segment"],
+                    "weight" => 1
+                ]];
+            }
+        }
+        else {
+            $result[] = ["data" => [
+                "source" => $pair["source_segment"],
+                "target" => $pair["target_segment"],
+                "label" => $pair["transition"],
+                "transition" => $pair["transition"],
+                "source_language" => $source_label,
+                "target_language" => $target_label,
+            ]];
+        }
     }
     return $result;
 }
@@ -302,6 +334,7 @@ function generate_transition_data($data) {
             "transition" => $pair["source_segment"]."→".$pair["target_segment"],
             "source" => $pair["source_segment"],
             "target" => $pair["target_segment"],
+            "type" => "edge",
             "label" => $pair["environment"],
             "environment" => $pair["environment"],
         ]];
@@ -461,7 +494,7 @@ function get_data($pairs) {
         return ["data" => ["id" => $a]];
     }, $result);
     foreach($pairs as $pair) {
-        $result[] = ["data" => $pair];
+        $result[] = ["data" => $pair, "type" => "edge"];
     }
     return $result;
 }

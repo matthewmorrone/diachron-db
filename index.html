@@ -59,6 +59,10 @@ async function submitPair() {
     let result = await $get(url, headers);
     if (result) {
         await loadPairs();
+        $(`[pair='${result}']`).addClass("focus")
+        setTimeout(function() {
+            $(`[pair='${result}']`).removeClass("focus")
+        }, 2000)
     }
 }
 async function submitTransition() {
@@ -85,12 +89,8 @@ async function loadPairs(transition) {
             transition: transition
         }
     };
-    if ($(".search .source_segment select").val()) {
-        headers.data.source_segment = $(".search .source_segment select").selected();
-    }
-    if ($(".search .target_segment select").val()) {
-        headers.data.target_segment = $(".search .target_segment select").selected();
-    }
+    if ($(".search .source_segment select").val()) headers.data.source_segment = $(".search .source_segment select").selected();
+    if ($(".search .target_segment select").val()) headers.data.target_segment = $(".search .target_segment select").selected();
     let $table = $("#pairs tbody");
     $table.empty();
     if (!headers.data.source_segment && !headers.data.target_segment && !headers.data.transition) return;
@@ -114,7 +114,6 @@ async function loadPairs(transition) {
             $(this).html(`<a href='${link}' target='_blank'>${$(this).text()}</a>`);
         });
     }
-
 
     if (mode() === "edit") {
         $('#pairs tbody td:not(.submit)').off("click")
@@ -167,13 +166,8 @@ async function loadPairs(transition) {
         });
     }
 
-    if (mode() === "view") {
-
-    }
-    if (mode() === "edit") {
-
-    }
-
+    // if (mode() === "view") {}
+    // if (mode() === "edit") {}
 }
 
 async function loadData() {
@@ -190,7 +184,6 @@ async function loadData() {
     transitions = transitions.map(transition => {
         return {id: transition.id, value: transition.value};
     });
-    console.log(transitions)
     $(".search .transition select").html(jsonToOptions(transitions));
 
     let transition = localStorage.getItem("transition");
@@ -323,16 +316,12 @@ function modalFunctionality() {
                 <th><button class='plus'></button></th>
             </tr>`);
         }
-        if (mode() === "edit") {
-
-        }
-
 
         $transitionsTable.find("thead tr").each(function() {
             $(this).prepend(`<th></th>`);
         });
         $transitionsTable.find("tbody tr").each(function() {
-            $(this).prepend(`<td class='view-td'><button class='view' transition='${$(this).attr("transition")}'></button></td>`);
+            $(this).prepend(`<td class=''><button class='view' transition='${$(this).attr("transition")}'></button></td>`);
         });
         $(`${modal} .modal-body`).html($transitionsTable);
 
@@ -441,14 +430,6 @@ $(function() {
         $(`${modal} .modal-title`).text(table);
     });
 
-    $("#graph").click(function() {
-        let modal = "#graphModal";
-        let $modal = $(modal);
-        $modal.modal('show');
-        let table = $(this).text();
-        $(`${modal} .modal-title`).text(table);
-    });
-
     $("#random").click(function() {
         randomTransition();
     });
@@ -458,6 +439,31 @@ $(function() {
     });
     $(document).on("dblclick", ".environment", function() {
         $(this).toggleClass("noverflow")
+    });
+
+
+    $(document).on("click", "a", function() {
+        if ($(this).attr("href").includes("graph.html")) {
+            let $iframe = $(`<iframe src='${$(this).attr("href")}'>`) 
+            // $("body").append($iframe);
+            let modal = "#graphModal";
+            let $modal = $(modal);
+            $modal.modal('show');
+            let title = $(this).text();
+            $(`${modal} .modal-title`).text(title);
+
+            $(`${modal} .modal-body`).html($iframe);
+
+            window.addEventListener('message', function(e) {
+                $(`${modal} .modal-title`).text(e.data);
+            });
+
+            $modal.on('hide.bs.modal', function(e) {
+                $iframe.remove();
+            });
+            
+            return false;
+        }
     });
 
     let router = new Router({
@@ -475,7 +481,6 @@ $(function() {
         $(`[href='view']`).hide()
         $(`.submit`).hide()
         $("#keyboard, #segmentsModal, #languagesModal").hide()
-
     });
     router.add(`edit`, function() {
         console.log(`edit`);
@@ -551,5 +556,6 @@ $(function() {
 <link rel="import" href="modals/tags.html">
 <link rel="import" href="modals/error.html">
 <link rel="import" href="modals/about.html">
+<link rel="import" href="modals/graph.html">
 </body>
 </html>

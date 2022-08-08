@@ -73,7 +73,7 @@ async function loadSegments() {
 }
 async function loadSegmentData(segment) {
     segment = segment || $("#segments").val();
-    let headers = {mode: 'graph', type: 'segment', data: {value: segment}};
+    let headers = {mode: 'graph', type: 'segment', data: {value: segment, weighted: false}};
     let data = await $getJSON(url, headers);
     return data;
 }
@@ -123,7 +123,92 @@ function cytoscapeData(elements) {
             avoidOverlap: true,
             avoidOverlapPadding: 10,
         },
-        style: fetch('cy-style.json').then(res => res.json()),
+        style: [{
+            "selector": "node",
+            "style": {
+                "shape": "square",
+                "label": "data(id)",
+                "width": "label",
+                "height": "label",
+                "background-color": "white",
+                "border-width": "1px",
+                "border-color": "black",
+                "text-valign": "center",
+                "text-halign": "center",
+                "padding": 5
+            }
+            }, {
+            "selector": "edge",
+            "style": {
+                "label": "data(label)",
+                "text-rotation": "autorotate",
+                "width": 1,
+                "curve-style": "bezier",
+                "target-arrow-shape": "triangle",
+                "taxi-direction": "vertical",
+                "line-color": "black",
+                "target-arrow-color": "black",
+                "font-size": 7,
+                "text-margin-y": -7
+            }
+            }, {
+            "selector": "node[?flipLabel]",
+            "style": {
+                "text-halign": "right"
+            }
+            }, {
+            "selector": "node[type]",
+            "style": {
+                "label": "data(type)"
+            }
+            }, {
+            "selector": "edge.bezier",
+            "style": {
+                "curve-style": "bezier",
+                "control-point-step-size": 40
+            }
+            }, {
+            "selector": "edge.unbundled-bezier",
+            "style": {
+                "curve-style": "unbundled-bezier",
+                "control-point-distances": 120,
+                "control-point-weights": 0.1
+            }
+            }, {
+            "selector": "edge.multi-unbundled-bezier",
+            "style": {
+                "curve-style": "unbundled-bezier",
+                "control-point-distances": [40, -40],
+                "control-point-weights": [0.250, 0.75]
+            }
+            }, {
+            "selector": "edge.haystack",
+            "style": {
+                "curve-style": "haystack",
+                "haystack-radius": 10
+            }
+            }, {
+            "selector": "edge.segments",
+            "style": {
+                "curve-style": "segments",
+                "segment-distances": [40, -40],
+                "segment-weights": [0.250 , 0.75]
+            }
+            }, {
+            "selector": "edge.taxi",
+            "style": {
+                "curve-style": "taxi",
+                "taxi-direction": "downward",
+                "taxi-turn": 20,
+                "taxi-turn-min-distance": 50
+            }
+            }, {
+            "selector": "edge.straight-triangle",
+            "style": {
+                "curve-style": "straight-triangle",
+                "width": 10
+            }
+        }],
     };
     return data;
 }
@@ -137,6 +222,7 @@ function cytoscapeFunctionality(cy) {
     */
     cy.on('click', 'node', async function() {
         let segment = this.id();
+        if (segment === $("#segments").val()) return;
         $("#segments").val(segment).trigger("change");
     });
 }
@@ -158,9 +244,6 @@ async function doStuff() {
     cytoscape.warnings(false);
     let data, cy = cytoscape(data);
     cytoscapeFunctionality(cy);
-    window.addEventListener('resize', function(e) {
-        cy.center();
-    });
     $("#segments").change(async function() {
         $("#languages, #transitions").val("");
         let segment = $("#segments").val();
@@ -169,13 +252,13 @@ async function doStuff() {
             return;
         }
         let segmentData = await loadSegmentData(segment);
-        console.log("segmentData: ", segmentData);
         data = cytoscapeData(segmentData);
         cy = cytoscape(data);
         cytoscapeFunctionality(cy);
         cy.nodes(`[id = "${segment}"]`).style('background-color', 'gold');
         window.history.pushState("", "", "graph.html?segment="+segment);
         document.title = `${segment} | Segment Graph | Diachron DB`
+        window.parent.postMessage(document.title, '*');
     });
     $("#languages").change(async function() {
         $("#segments, #transitions").val("")
@@ -192,6 +275,7 @@ async function doStuff() {
         cy.nodes(`[id = "${language}"]`).style('background-color', 'gold');
         window.history.pushState("", "", "graph.html?language="+language);
         document.title = `${language} | Language Graph | Diachron DB`
+        window.parent.postMessage(document.title, '*');
     });
     $("#transitions").change(async function() {
         $("#segments, #languages").val("");
@@ -207,6 +291,7 @@ async function doStuff() {
         cytoscapeFunctionality(cy);
         window.history.pushState({}, $("#transitions").val(), "graph.html?transition="+transition);
         document.title = `${transition} | Transition Graph | Diachron DB`
+        window.parent.postMessage(document.title, '*');
     });
     $("#edgeLabels").click(function() {
         cy.style().selector('edge').style({
@@ -248,7 +333,6 @@ async function doStuff() {
     else {
         emptyGraph(cy);
     }
-
 }
 $(function() {
     $("[rel='import']").each(async function() {

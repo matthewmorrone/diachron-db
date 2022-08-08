@@ -25,19 +25,27 @@ $database = (isset($database) ? $database : "diachron");
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 + [cytoscape.js](https://js.cytoscape.org/)
 
-#### Enhancements: 
-+ more robust url routing
-+ use url routing to consolidate view and edit into a single file
-+ open graphs in iframe on same page rather than new tab
-+ merge graph viewers, enhance graphs
+### Enhancements: 
++ switch over as much database interaction as possible to prepared statements (apparently only PDO supports named parameters?)
 + option to toggle between showing transition and source language → target language
 + add depth option (will definitely need a circularity check, see segment "an")
 + for a specific segment, show all sources for which it's a target on the left, and all targets for which it's a source on the right: aka, all arrows point rightwards
-+ sql injection barriers / input sanitization
 + regular backups of data, data approval
 + languages and transitions need both citation and notes fields
++ editing nodes and vertices updates database?
++ draggable columns, if saveable to localStorage even better
++ consider adding in environment data for pairs: alternatively, encourage specific segment notation
++ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
+
+### Refactoring:
++ when modifying something and that something already exists, merge rather than reject
+
+### Known Bugs:
++ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
 
 ### Inventory Calculation
++ consider having separate phone table rather than just segment table
++ calculate inventories from ancestral inventory and rules through data interface
 + edit inventories through data interface
 + when calculating an inventory, include segments in source column of rules
 + expansion of abbreviations and inventory enumeration
@@ -50,17 +58,3 @@ $database = (isset($database) ? $database : "diachron");
 + differences from actual inventory will elucidate missing data
 + create look up table that returns all phones of a given abbreviation
 + then filter for only those that belong to a specific language
-
-#### Refactoring:
-+ when modifying something and that something already exists, merge rather than reject
-
-#### Known Bugs:
-+ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
-
-### Possible Enhancements:
-+ calculate inventories from ancestral inventory and rules through data interface
-+ editing nodes and vertices updates database?
-+ draggable columns, if saveable to localStorage even better
-+ consider adding in environment data for pairs: alternatively, encourage specific segment notation
-+ dedicated ANTLR parser for phonological rules: better data import from index diachronica, easier input later on down the line
-+ consider having separate phone table rather than just segment table
