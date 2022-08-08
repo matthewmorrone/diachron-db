@@ -97,10 +97,11 @@ async function loadPairs(transition) {
 
     let rows = await $getJSON(url, headers);
     if (!rows) return;
-    console.log(rows.size()+" rows loaded")
+    console.log(`${transition}: ${rows.size()} rows loaded`)
 
+    $table.empty();
     rows && rows.forEach(function(row) {
-        let $tableRow = $(jsonToTableRow(row, "pair", mode()==='edit'));
+        let $tableRow = $(jsonToTableRow(row, "pair", mode() === 'edit'));
         $table.append($tableRow);
     });
 
@@ -280,7 +281,7 @@ function modalFunctionality() {
             });
 
             $modal.on('hide.bs.modal', function(e) {
-                loadPairs();
+                // loadPairs();
             });
         });
     }
@@ -397,7 +398,7 @@ function modalFunctionality() {
         }
 
         $modal.on('hide.bs.modal', function(e) {
-            loadPairs();
+            // loadPairs();
         });
 
     });
@@ -473,17 +474,12 @@ $(function() {
             console.log('"/' + path + '" Page not found');
         }
     });
-    router.add(``, function() {
-        console.log(``, this);
-    });
     router.add(`view`, function() {
-        console.log(`view`);
         $(`[href='view']`).hide()
         $(`.submit`).hide()
         $("#keyboard, #segmentsModal, #languagesModal").hide()
     });
     router.add(`edit`, function() {
-        console.log(`edit`);
         $(`[href='edit']`).hide();
     });
 
