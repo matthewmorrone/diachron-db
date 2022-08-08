@@ -575,7 +575,7 @@ AND pairs.transition_id = transitions.id
 AND transitions.source_language_id = source_language.id
 AND transitions.target_language_id = target_language.id";
 if ($source_segment and $target_segment) {
-    $query .= " AND (source_segment.value = '$source_segment' OR target_segment.value = '$target_segment')";
+    $query .= " AND (source_segment.value = '$source_segment' AND target_segment.value = '$target_segment')";
 }
 else if ($source_segment) $query .= " AND source_segment.value = '$source_segment'";
 else if ($target_segment) $query .= " AND target_segment.value = '$target_segment'";
