@@ -24,19 +24,3 @@ $database = (isset($database) ? $database : "diachron");
 + [tagify](https://yaireo.github.io/tagify/)
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
 + [cytoscape.js](https://js.cytoscape.org/)
-
-### Inventory Calculation
-+ consider having separate phone table rather than just segment table
-+ calculate inventories from ancestral inventory and rules through data interface
-+ edit inventories through data interface
-+ when calculating an inventory, include segments in source column of rules
-+ expansion of abbreviations and inventory enumeration
-+ will need to have each language's inventory (available in html but currently ignored)
-+ add data to database which contains every phone that belongs to a language
-+ and a method of retrieving members based on features, which will require a lookup table
-+ lookup table maps abbreviations to all phones they would represent
-+ given a language and a category, return that set of phones within that language
-+ given a language, start at its earliest inventoried ancestor apply enumerate sound changes
-+ differences from actual inventory will elucidate missing data
-+ create look up table that returns all phones of a given abbreviation
-+ then filter for only those that belong to a specific language
