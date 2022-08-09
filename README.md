@@ -45,10 +45,6 @@ $database = (isset($database) ? $database : "diachron");
 + when modifying something that already exists, merge rather than reject
 + switch to using arrow functions as much as possible (will need to use e.target)
 
-### Known Bugs:
-+ figure out what's going on with the tagify error (open segments modal, close, then open languages modal)
-+ I'd like to clear dropdowns on backspace instead of escape, but backspace doesn't appear to fire as a key event while a dropdown is open
-
 ### Inventory Calculation
 + consider having separate phone table rather than just segment table
 + calculate inventories from ancestral inventory and rules through data interface
