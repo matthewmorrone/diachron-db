@@ -18,8 +18,10 @@ $database = (isset($database) ? $database : "diachron");
 
 + Navigate to <code>localhost/diachron-db</code> in your browser
 
-#### Uses:
-+ Data comes from [Index Diachronica](https://chridd.nfshost.com/diachronica/all)
+### Data:
++ [Index Diachronica](https://chridd.nfshost.com/diachronica/all)
+
+### Libraries: 
 + [Bootstrap 5](https://getbootstrap.com/)
 + [tagify](https://yaireo.github.io/tagify/)
 + [simple-keyboard](https://hodgef.com/simple-keyboard/)
