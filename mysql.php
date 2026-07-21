@@ -13,13 +13,6 @@ if ($_GET) {
     extract($_GET);
 
     switch($mode) {
-        case "connect":
-            printr($mysqli, "$username@$hostname");
-        break;
-        case "tables":
-            $query = "SHOW TABLES FROM $database";
-            echo json_encode(get_tables());
-        break;
         case "graph":
             switch($type) {
                 case "language":   echo json_encode(generate_family_data($data)); break;
@@ -60,40 +53,6 @@ if ($_GET) {
                 case "language":   echo remove_language($data);   break;
                 case "transition": echo remove_transition($data); break;
             }
-        break;
-        case "test":
-            $source_segment = "e";
-            $target_segment = "i";
-            $source_language = "Proto-Indo-European";
-            $target_language = "Latin";
-
-            printr("count_tables: ", count_tables());
-            printr("get_tables: ", json_encode(get_tables()));
-            printr("get_segments: ", count(get_segments()));
-            printr("get_languages: ", count(get_languages()));
-            printr("get_transitions: ", count(get_transitions()));
-
-            printr("check_segment $source_segment: ", check_segment(["value" => $source_segment]));
-            printr("get_segment $source_segment: ", get_segment(["value" => $source_segment])[0]["id"]);
-
-            printr("check_segment $target_segment: ", check_segment(["value" => $target_segment]));
-            printr("get_segment $target_segment: ", get_segment(["value" => $target_segment])[0]["id"]);
-
-            printr("check_language $source_language: ", check_language(["value" => $source_language]));
-            $source_language_id = get_language(["value" => $source_language])[0]["id"];
-            printr("get_language $source_language: ", $source_language_id);
-
-            printr("check_language $target_language: ", check_language(["value" => $target_language]));
-            $target_language_id = get_language(["value" => $target_language])[0]["id"];
-            printr("get_language $target_language: ", $target_language_id);
-
-            printr("check_transition $source_language → $target_language: ", check_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id]));
-            $transition = get_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id])[0];
-            printr("get_transition $source_language → $target_language: ", $transition["id"]);
-
-        break;
-        case "reset":
-            reset_database();
         break;
         case "dump":
             switch($format) {
