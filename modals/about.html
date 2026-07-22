@@ -2,10 +2,39 @@
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title"></h5>
+                <h5 class="modal-title">About Diachron DB</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                <figure class='figure'>
+                    <figcaption>What is this?</figcaption>
+                    <p>
+                        Languages change their sounds over time in regular, predictable ways.
+                        Latin's <em>k</em> softened into the <em>ch</em> of Italian; a scatter of
+                        Proto-Indo-European consonants hardened into the sounds described by
+                        Grimm's Law on their way to becoming Germanic. Diachron DB is a database
+                        of those sound changes — collected from historical/comparative linguistics
+                        sources (originally seeded from the
+                        <a href="https://chridd.nfshost.com/diachronica/all" target="_blank">Index Diachronica</a>)
+                        and organized so they can be searched, compared, and edited directly in
+                        the browser.
+                    </p>
+                </figure>
+                <figure class='figure'>
+                    <figcaption>How to read the data</figcaption>
+                    <ul class='list-unstyled'>
+                        <li><strong>Transition</strong> — a language relationship, e.g. "Latin → Sardinian": the set of sound changes that occurred going from a source language to a descendant/related one.</li>
+                        <li><strong>Pair</strong> — one specific correspondence within a transition: a <strong>Source</strong> sound (IPA symbol) that became a <strong>Target</strong> sound. Latin <em>k</em> → Sardinian <em>k</em> is one row; Latin <em>e</em> → Sardinian <em>i</em> is another.</li>
+                        <li><strong>Environment</strong> — the phonological context that conditions the change (e.g. "before a vowel," "word-final"), written with the shorthand notation in the abbreviations key below.</li>
+                        <li><strong>Notes</strong> — citations, exceptions, or other detail on a specific pair.</li>
+                    </ul>
+                    <p>
+                        Pick a source and target language above to filter to their transition, or
+                        hit <strong>Random</strong> to browse. Data can be added or corrected
+                        directly through the table — this project is meant to be community-editable,
+                        not a fixed reference.
+                    </p>
+                </figure>
                 <figure class='figure'>
                     <figcaption>Key to Abbreviations</figcaption>
                     <ul class="list-unstyled">
