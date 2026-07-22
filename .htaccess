@@ -1,3 +1,4 @@
 RewriteEngine on
+RewriteOptions Inherit
 RewriteRule view index.html [L]
 RewriteRule edit index.html [L]
