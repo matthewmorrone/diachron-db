@@ -607,7 +607,7 @@ ORDER BY transition";
 }
 function get_segments($data=null) {
     $limit = isset($data["limit"]) ? $data["limit"] : 0;
-    $query = "SELECT id, value FROM segments ORDER BY value";
+    $query = "SELECT id, value FROM used_segments ORDER BY value";
     if ($limit) $query .= " LIMIT $limit";
     foreach(get_query($query) as $row) {
         $results[] = ["id" => $row["id"], "value" => $row["value"]];
