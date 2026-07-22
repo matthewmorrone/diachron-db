@@ -1,4 +1,13 @@
 RewriteEngine on
 RewriteOptions Inherit
+
+# The inherited root redirect rule (/projects/diachron-db -> /diachron-db)
+# can't match here: inheritance re-applies it relative to this directory,
+# where a pattern starting with ^projects/ can never match since we're
+# already inside it. Redirect explicitly instead, keyed off the client's
+# actual request line.
+RewriteCond %{THE_REQUEST} \s/projects/diachron-db(/\S*)?\s
+RewriteRule ^ /diachron-db%1 [R=301,L]
+
 RewriteRule view index.html [L]
 RewriteRule edit index.html [L]
