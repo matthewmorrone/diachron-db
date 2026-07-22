@@ -86,7 +86,7 @@ function jsonToTableRow(data, id, ex) {
     let result = `<tr ${id}='${data['id']}'>`;
     for (let key in data) {
         if (key === 'id') continue;
-        result += `<td class='${key} noverflow'>${data[key]}</td>`;
+        result += `<td class='${key} noverflow'>${data[key] ?? ''}</td>`;
     }
     if (ex) {
         result += `<td class='submit'><button class='ex' data-bs-id="${data['id']}"></button></td>`;
@@ -111,7 +111,7 @@ function jsonToTable(data, id) {
         result += `<tr ${id.slice(0, id.length-1)}='${data[i]['id']}'>`;
         for (let key in data[i]) {
             if (key === 'id') continue;
-            result += `<td class=${key}>${data[i][key]}</td>`;
+            result += `<td class=${key}>${data[i][key] ?? ''}</td>`;
         }
         result += `<td class='submit'><button class='ex' data-bs-id="${data[i]['id']}"></button></td>`;
         result += `</tr>`;

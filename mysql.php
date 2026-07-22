@@ -54,6 +54,11 @@ if ($_GET) {
                 case "transition": echo remove_transition($data); break;
             }
         break;
+        case "flag":
+            switch($table) {
+                case "pair": echo set_pair_flag($data); break;
+            }
+        break;
         case "dump":
             switch($format) {
                 case "json": echo exportJson(); break;
@@ -509,19 +514,25 @@ SELECT target_segment_id FROM pairs
     // probably need to do something similar for languages and transitions
 }
 function query_pairs($data) {
+    GLOBAL $mysqli;
     if      ($data["source_segment_id"]) $source_segment = get_or_add_segment(["value" => $data["source_segment"]]);
     else if ($data["source_segment"])    $source_segment = $data["source_segment"];
 
     if      ($data["target_segment_id"]) $target_segment = get_or_add_segment(["value" => $data["target_segment"]]);
     else if ($data["target_segment"])    $target_segment = $data["target_segment"];
 
+    if (isset($source_segment)) $source_segment = $mysqli->real_escape_string($source_segment);
+    if (isset($target_segment)) $target_segment = $mysqli->real_escape_string($target_segment);
+
     $transition = $data["transition"];
+    if ($transition) $transition = $mysqli->real_escape_string($transition);
     $query = "SELECT pairs.id AS id,
 source_segment.value AS source_segment,
 target_segment.value AS target_segment,
 CONCAT(source_language.value, ' → ', target_language.value) AS transition,
 pairs.environment,
-pairs.notes
+pairs.notes,
+pairs.flagged
 FROM pairs
 INNER JOIN segments AS source_segment
 INNER JOIN segments AS target_segment
@@ -538,6 +549,7 @@ if ($source_segment and $target_segment) {
 }
 else if ($source_segment) $query .= " AND source_segment.value = '$source_segment'";
 else if ($target_segment) $query .= " AND target_segment.value = '$target_segment'";
+if ($data["flagged"] === "1" || $data["flagged"] === "0") $query .= " AND pairs.flagged = " . (int)$data["flagged"];
 if ($transition) $query .= " HAVING transition = '$transition'";
 $query .= " ORDER BY transition";
     return get_query($query);
@@ -684,6 +696,7 @@ INNER JOIN languages AS source_language
 INNER JOIN languages AS target_language
 ON  transitions.source_language_id = source_language.id
 AND transitions.target_language_id = target_language.id
+WHERE EXISTS (SELECT 1 FROM pairs WHERE pairs.transition_id = transitions.id)
 ";
     if ($limit) $query .= "LIMIT $limit";
     $result = get_query($query);
@@ -779,6 +792,14 @@ function get_or_add_transition($data) {
     else {
         return add_transition(["source_language_id" => $source_language_id, "target_language_id" => $target_language_id, "citation" => $citation]);
     }
+}
+function set_pair_flag($data) {
+    GLOBAL $mysqli;
+    $id = (int)($data["id"] ?? 0);
+    if (!$id) return -1;
+    $flagged = !empty($data["flagged"]) ? 1 : 0;
+    do_query("UPDATE pairs SET flagged=$flagged WHERE id=$id");
+    return $flagged;
 }
 function update_pair($data) {
     $id = $data["id"];

@@ -107,6 +107,25 @@ textarea {
     text-overflow: ellipsis;
 }
 
+#pairs {
+    table-layout: fixed !important;
+    width: 1470px !important;
+}
+#pairs th, #pairs td {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+#pairs .source_segment { width: 150px; }
+#pairs .target_segment { width: 150px; }
+#pairs .transition { width: 320px; max-width: none; }
+#pairs .environment { width: 320px; max-width: none; }
+#pairs .notes { width: 340px; }
+#pairs .flagged { width: 70px; text-align: center; cursor: pointer; }
+#pairs tbody tr { cursor: pointer; }
+#pairs tbody tr.flagged-row { background-color: #ffe4c4 !important; color: #000 !important; }
+#pairs .submit { width: 60px; }
+
 .alert {
     margin-bottom: 0px !important;
 }
